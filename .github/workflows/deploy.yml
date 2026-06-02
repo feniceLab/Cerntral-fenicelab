@@ -30,12 +30,18 @@ jobs:
             auth:
               - 'apps/auth/**'
               - 'shared/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
             painel:
               - 'apps/painel/**'
               - 'shared/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
             portal:
               - 'apps/portal/**'
               - 'shared/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
 
   deploy:
     needs: changes
