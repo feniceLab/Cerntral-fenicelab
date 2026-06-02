@@ -1,40 +1,16 @@
-import { useState } from 'react';
-import { Subnav, type TrafegoTab } from '../components/Subnav';
-import { ClienteLive } from '../components/ClienteLive';
-import { TrafegoGeral } from './TrafegoGeral';
-import { TrafegoCampanhas } from './TrafegoCampanhas';
-import { TrafegoCriar } from './TrafegoCriar';
-import { TrafegoRenovacao } from './TrafegoRenovacao';
-import { TrafegoRelatorios } from './TrafegoRelatorios';
-import { TP_CLIENTES, type TPCliente } from '../data';
+const TRAFEGO_URL =
+  ((import.meta as any).env?.VITE_TRAFEGO_URL as string) || 'https://relatorios.fenicelab.com.br';
 
-// Submodulo Tráfego Pago: subnav por abas + dashboard ao vivo por cliente.
+/** Tráfego Pago — dashboard real (Meta Ads) embutido no painel. */
 export function Trafego() {
-  const [tab, setTab] = useState<TrafegoTab>('geral');
-  const [cli, setCli] = useState<TPCliente>(TP_CLIENTES[0]);
-  const [live, setLive] = useState(false);
-
-  const openLive = (c: TPCliente) => {
-    setCli(c);
-    setLive(true);
-  };
-
-  if (live) {
-    return <ClienteLive cliente={cli} voltar={() => setLive(false)} />;
-  }
-
-  const view = {
-    geral: <TrafegoGeral openLive={openLive} />,
-    campanhas: <TrafegoCampanhas go={setTab} />,
-    criar: <TrafegoCriar go={setTab} />,
-    renovacao: <TrafegoRenovacao />,
-    relatorios: <TrafegoRelatorios />,
-  }[tab];
-
   return (
-    <>
-      <Subnav tab={tab} setTab={setTab} />
-      {view}
-    </>
+    <div style={{ height: 'calc(100vh - 84px)', width: '100%' }}>
+      <iframe
+        title="Tráfego Pago — Fenice"
+        src={TRAFEGO_URL}
+        style={{ border: 0, width: '100%', height: '100%', display: 'block', borderRadius: 12, background: '#F3ECE2' }}
+        allow="clipboard-read; clipboard-write; fullscreen"
+      />
+    </div>
   );
 }

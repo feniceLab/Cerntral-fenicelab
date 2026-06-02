@@ -9,21 +9,16 @@ import { Relatorios } from './screens/Relatorios';
 import { BrandBook } from './screens/BrandBook';
 import { Aprovacao } from './screens/Aprovacao';
 import { Sugestoes } from './screens/Sugestoes';
-import { TrafegoDash } from './screens/TrafegoDash';
-import { TrafegoDetalhe } from './screens/TrafegoDetalhe';
-import { TrafegoRelatorio } from './screens/TrafegoRelatorio';
 import {
   isPortalTab,
   type PortalRoute,
   type PortalTab,
   type Surface,
-  type TrafegoRoute,
 } from './navigation';
 
 export function App() {
   const [surface, setSurface] = useState<Surface>('portal');
   const [portal, setPortal] = useState<PortalRoute>('inicio');
-  const [trafego, setTrafego] = useState<TrafegoRoute>('dash');
 
   const goPortalTab = (tab: PortalTab) => setPortal(tab);
 
@@ -39,7 +34,7 @@ export function App() {
         {surface === 'portal' ? (
           <PortalSurface route={portal} go={setPortal} />
         ) : (
-          <TrafegoSurface route={trafego} go={setTrafego} />
+          <TrafegoSurface />
         )}
       </div>
 
@@ -96,15 +91,16 @@ function PortalSurface({ route, go }: { route: PortalRoute; go: (r: PortalRoute)
   }
 }
 
-function TrafegoSurface({ route, go }: { route: TrafegoRoute; go: (r: TrafegoRoute) => void }) {
-  switch (route) {
-    case 'dash':
-      return <TrafegoDash go={go} />;
-    case 'detalhe':
-      return <TrafegoDetalhe go={go} />;
-    case 'relatorio':
-      return <TrafegoRelatorio go={go} />;
-    default:
-      return <TrafegoDash go={go} />;
-  }
+function TrafegoSurface() {
+  const base =
+    ((import.meta as any).env?.VITE_TRAFEGO_URL as string) || 'https://relatorios.fenicelab.com.br';
+  // relatório vertical do cliente (cai bem no mobile); slug fixo por ora — virá da sessão
+  return (
+    <iframe
+      title="Tráfego Pago"
+      src={`${base}/suprema-report.html`}
+      style={{ border: 0, width: '100%', height: '100%', minHeight: 620, display: 'block', background: '#2A211C' }}
+      allow="fullscreen"
+    />
+  );
 }
