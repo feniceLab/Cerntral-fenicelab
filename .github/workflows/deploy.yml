@@ -1,0 +1,90 @@
+name: deploy-central
+
+# Deploy POR APP: no push pra main, builda+deploya SÓ o app que mudou.
+# auth → raiz do site · painel → /painel · portal → /portal. shared/ → rebuilda os 3.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-central
+  cancel-in-progress: false
+
+env:
+  SITE: /etc/icontainer/apps/openresty/openresty/www/sites/central.fenicelab.com.br
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      auth: ${{ steps.f.outputs.auth }}
+      painel: ${{ steps.f.outputs.painel }}
+      portal: ${{ steps.f.outputs.portal }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: f
+        with:
+          filters: |
+            auth:
+              - 'apps/auth/**'
+              - 'shared/**'
+            painel:
+              - 'apps/painel/**'
+              - 'shared/**'
+            portal:
+              - 'apps/portal/**'
+              - 'shared/**'
+
+  deploy:
+    needs: changes
+    if: ${{ needs.changes.outputs.auth == 'true' || needs.changes.outputs.painel == 'true' || needs.changes.outputs.portal == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: SSH setup
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_KEY }}" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+      - name: vars
+        id: v
+        run: echo "ssh=ssh -i ~/.ssh/deploy -p ${{ secrets.SSH_PORT }}" >> "$GITHUB_OUTPUT"
+
+      - name: deploy auth (raiz)
+        if: ${{ needs.changes.outputs.auth == 'true' }}
+        run: |
+          pnpm --filter @fenice/auth build
+          # raiz: NÃO usar --delete (preserva painel/ portal/ ssl/ favicons)
+          rsync -az -e "${{ steps.v.outputs.ssh }}" apps/auth/dist/ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$SITE/"
+
+      - name: deploy painel
+        if: ${{ needs.changes.outputs.painel == 'true' }}
+        run: |
+          pnpm --filter @fenice/painel build
+          ${{ steps.v.outputs.ssh }} "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p $SITE/painel"
+          rsync -az --delete -e "${{ steps.v.outputs.ssh }}" apps/painel/dist/ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$SITE/painel/"
+
+      - name: deploy portal
+        if: ${{ needs.changes.outputs.portal == 'true' }}
+        run: |
+          pnpm --filter @fenice/portal build
+          ${{ steps.v.outputs.ssh }} "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p $SITE/portal"
+          rsync -az --delete -e "${{ steps.v.outputs.ssh }}" apps/portal/dist/ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$SITE/portal/"
+
+      - name: limpa lixo macOS
+        run: ${{ steps.v.outputs.ssh }} "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "find $SITE -name '._*' -delete 2>/dev/null || true"
