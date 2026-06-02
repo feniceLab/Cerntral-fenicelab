@@ -1,0 +1,117 @@
+/* ============================================================
+   Trafego Pago — CSS especifico de tela (prefixo fen-tp-).
+   Tokens e componentes vem de @fenice/shared. Sem Tailwind.
+   ============================================================ */
+
+@keyframes fen-tp-ping {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes fen-tp-flash {
+  0% { color: var(--fen-cotta); transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+@keyframes fen-tp-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes fen-tp-rise {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Palco: o painel e uma "janela" desktop, o portal e um iPhone. */
+.fen-tp-stage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+}
+.fen-tp-stage--painel {
+  background: #e6dac8;
+  background-image: radial-gradient(circle at 50% -10%, rgba(204, 122, 77, 0.16), transparent 55%);
+}
+.fen-tp-stage--portal {
+  background: var(--fen-avorio);
+  background-image: radial-gradient(circle at 50% 0%, rgba(204, 122, 77, 0.1), transparent 60%);
+  padding: 40px 0;
+}
+
+/* alternador de superficie (so para navegar entre painel/portal) */
+.fen-tp-surface-switch {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 50;
+  display: flex;
+  gap: 4px;
+  background: var(--fen-surface);
+  border: 1px solid var(--fen-border);
+  border-radius: var(--fen-r-pill);
+  padding: 4px;
+  box-shadow: var(--fen-sh-md);
+}
+.fen-tp-surface-switch button {
+  font: 600 12px/1 var(--fen-font);
+  border: 0;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: var(--fen-r-pill);
+  background: transparent;
+  color: var(--fen-muted);
+}
+.fen-tp-surface-switch button[data-on='true'] {
+  background: var(--fen-terra);
+  color: #fff;
+}
+
+/* janela desktop do painel */
+.fen-tp-window {
+  display: flex;
+  width: 1280px;
+  height: 800px;
+  background: var(--fen-avorio);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(42, 33, 28, 0.28);
+  border: 1px solid var(--fen-border);
+}
+
+.fen-tp-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+}
+
+/* inputs do wizard (o atomo Field do shared cobre o basico, aqui so o textarea) */
+.fen-tp-textarea {
+  width: 100%;
+  min-height: 84px;
+  resize: none;
+  font: 500 14px/1.5 var(--fen-font);
+  padding: 12px;
+  border: 1.5px solid var(--fen-border);
+  border-radius: var(--fen-r-md);
+  background: var(--fen-surface);
+  color: var(--fen-text);
+  box-sizing: border-box;
+  outline: none;
+}
+.fen-tp-textarea:focus {
+  border-color: var(--fen-terra);
+}
+
+.fen-tp-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* scrollbar terrosa (painel) */
+.fen-tp-window ::-webkit-scrollbar { width: 10px; height: 10px; }
+.fen-tp-window ::-webkit-scrollbar-thumb {
+  background: var(--fen-argilla);
+  border-radius: 20px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}

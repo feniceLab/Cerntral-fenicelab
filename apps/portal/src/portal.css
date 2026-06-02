@@ -1,0 +1,1017 @@
+/* ============================================================
+   Portal do Cliente — estilos especificos das telas (mobile).
+   Tokens e atomos vem de @fenice/shared. Aqui ficam apenas
+   composicoes proprias da superficie portal (prefixo fen-pt-).
+   ============================================================ */
+
+/* ---------- palco / fundo (replica o body do prototipo) ---------- */
+.fen-pt-stage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  box-sizing: border-box;
+  background: var(--fen-avorio);
+  background-image: radial-gradient(circle at 50% 0%, rgba(204, 122, 77, 0.1), transparent 60%);
+}
+
+/* ---------- moldura de device ---------- */
+.fen-pt-device {
+  width: 390px;
+  height: 820px;
+  max-height: 92vh;
+  border-radius: 46px;
+  overflow: hidden;
+  position: relative;
+  background: var(--fen-avorio);
+  box-shadow:
+    0 40px 80px rgba(42, 33, 28, 0.22),
+    0 0 0 1px rgba(42, 33, 28, 0.12),
+    0 0 0 10px #1b1410;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--fen-font);
+  -webkit-font-smoothing: antialiased;
+}
+.fen-pt-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 118px;
+  height: 32px;
+  border-radius: 22px;
+  background: #000;
+  z-index: 50;
+}
+.fen-pt-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.fen-pt-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* ---------- header de tela ---------- */
+.fen-pt-header {
+  padding: 14px 18px 12px;
+  background: var(--fen-avorio);
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  border-bottom: 1px solid var(--fen-border);
+}
+.fen-pt-header__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fen-pt-header__title {
+  font-family: var(--fen-display);
+  font-weight: 900;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  color: var(--fen-caffe);
+  line-height: 1;
+}
+.fen-pt-iconbtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--fen-surface);
+  border: 1px solid var(--fen-border);
+  display: grid;
+  place-items: center;
+  color: var(--fen-caffe);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.fen-pt-iconbtn--back {
+  width: 38px;
+  height: 38px;
+}
+.fen-pt-iconbtn--back svg {
+  transform: scaleX(-1);
+}
+.fen-pt-bell-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--fen-terra);
+  border: 2px solid var(--fen-avorio);
+}
+
+.fen-pt-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- hero escuro (caffe) ---------- */
+.fen-pt-hero {
+  background: var(--fen-caffe);
+  border-radius: var(--fen-r-lg);
+  padding: 18px;
+  color: var(--fen-avorio);
+  position: relative;
+  overflow: hidden;
+}
+.fen-pt-hero--click {
+  cursor: pointer;
+}
+.fen-pt-hero__flor {
+  position: absolute;
+  right: -40px;
+  top: -30px;
+  width: 150px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.fen-pt-hero__title {
+  font-family: var(--fen-display);
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1.1;
+  margin: 8px 0 4px;
+  max-width: 230px;
+}
+.fen-pt-hero__sub {
+  font: 400 13px/1.5 var(--fen-font);
+  color: #d8cdbd;
+  max-width: 220px;
+}
+.fen-pt-hero__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font: 700 13px/1 var(--fen-font);
+  color: var(--fen-cotta);
+}
+
+/* ---------- linhas de secao ---------- */
+.fen-pt-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.fen-pt-link {
+  font: 600 12px/1 var(--fen-font);
+  color: var(--fen-terra-d);
+  cursor: pointer;
+}
+.fen-pt-row-gap {
+  display: flex;
+  gap: 10px;
+}
+.fen-pt-col-gap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- StatPill (vs Marco Zero) ---------- */
+.fen-pt-stat {
+  flex: 1;
+}
+.fen-pt-stat__value {
+  font-family: var(--fen-display);
+  font-weight: 900;
+  font-size: 24px;
+  color: var(--fen-terra);
+  line-height: 1;
+}
+.fen-pt-stat__label {
+  font: 500 11px/1.3 var(--fen-font);
+  color: var(--fen-muted);
+  margin-top: 5px;
+}
+.fen-pt-stat__delta {
+  font: 700 11px/1 var(--fen-font);
+  margin-top: 6px;
+}
+.fen-pt-stat__delta.is-up {
+  color: var(--fen-success);
+}
+.fen-pt-stat__delta.is-down {
+  color: var(--fen-danger);
+}
+
+/* ---------- atalhos / feed rows ---------- */
+.fen-pt-shortcut {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.fen-pt-shortcut__ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--fen-terra-l);
+  display: grid;
+  place-items: center;
+  color: var(--fen-terra-d);
+  flex-shrink: 0;
+}
+.fen-pt-shortcut__label {
+  font: 600 13px/1.2 var(--fen-font);
+  color: var(--fen-text);
+}
+.fen-pt-feed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fen-pt-feed__thumb {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.fen-pt-feed__title {
+  font: 600 14px/1.2 var(--fen-font);
+  color: var(--fen-text);
+}
+.fen-pt-feed__meta {
+  font: 500 12px/1 var(--fen-font);
+  color: var(--fen-muted);
+  margin-top: 4px;
+}
+
+/* ---------- bottom nav + FAB ---------- */
+.fen-pt-nav {
+  position: relative;
+  border-top: 1px solid var(--fen-border);
+  background: var(--fen-surface);
+  display: flex;
+  padding: 8px 6px 22px;
+  z-index: 6;
+}
+.fen-pt-nav__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--fen-muted);
+  background: none;
+  border: 0;
+  font-family: var(--fen-font);
+}
+.fen-pt-nav__item.is-active {
+  color: var(--fen-terra);
+}
+.fen-pt-nav__label {
+  font: 500 10px/1 var(--fen-font);
+}
+.fen-pt-nav__item.is-active .fen-pt-nav__label {
+  font-weight: 700;
+}
+.fen-pt-nav__fab-slot {
+  width: 64px;
+  position: relative;
+}
+.fen-pt-fab {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--fen-flame);
+  box-shadow: var(--fen-sh-md);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  cursor: pointer;
+  border: 0;
+}
+
+/* ---------- legenda do calendario ---------- */
+.fen-pt-legend {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.fen-pt-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 500 11px/1 var(--fen-font);
+  color: var(--fen-muted);
+}
+.fen-pt-legend__dot,
+.fen-pt-cal__dot {
+  border-radius: 999px;
+}
+.fen-pt-legend__dot {
+  width: 9px;
+  height: 9px;
+}
+.fen-pt-cal__head {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 8px;
+}
+.fen-pt-cal__dow {
+  text-align: center;
+  font: 700 10px/1 var(--fen-font);
+  letter-spacing: 0.08em;
+  color: var(--fen-muted);
+  text-transform: uppercase;
+}
+.fen-pt-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.fen-pt-cal__cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 9px;
+}
+.fen-pt-cal__cell.is-today {
+  background: var(--fen-terra-l);
+}
+.fen-pt-cal__num {
+  font: 500 13px/1 var(--fen-font);
+  color: var(--fen-text);
+}
+.fen-pt-cal__cell.is-today .fen-pt-cal__num {
+  font-weight: 700;
+  color: var(--fen-terra-d);
+}
+.fen-pt-cal__dot {
+  width: 6px;
+  height: 6px;
+}
+.fen-pt-cal__foot {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 500 12px/1.4 var(--fen-font);
+  color: var(--fen-muted);
+  padding: 0 4px;
+}
+
+/* ---------- galeria / upload ---------- */
+.fen-pt-drop {
+  border: 1.5px dashed var(--fen-terra);
+  border-radius: var(--fen-r-lg);
+  padding: 22px;
+  text-align: center;
+  background: var(--fen-terra-l);
+  margin-bottom: 18px;
+  cursor: pointer;
+}
+.fen-pt-drop__ico {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: var(--fen-flame);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 10px;
+  color: #fff;
+}
+.fen-pt-drop__title {
+  font: 700 15px/1.2 var(--fen-font);
+  color: var(--fen-terra-d);
+}
+.fen-pt-drop__sub {
+  font: 400 12px/1.4 var(--fen-font);
+  color: var(--fen-muted);
+  margin-top: 4px;
+}
+.fen-pt-upload {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fen-pt-upload__thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  object-fit: cover;
+}
+.fen-pt-upload__name {
+  font: 600 13px/1 var(--fen-font);
+  margin-bottom: 6px;
+}
+.fen-pt-progress {
+  height: 7px;
+  background: var(--fen-argilla);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.fen-pt-progress__bar {
+  height: 100%;
+  background: var(--fen-flame);
+}
+.fen-pt-upload__pct {
+  font: 700 12px/1 var(--fen-mono);
+  color: var(--fen-muted);
+}
+.fen-pt-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+.fen-pt-gallery img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* ---------- relatorios (barras + leitura IA) ---------- */
+.fen-pt-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 110px;
+}
+.fen-pt-bars__bar {
+  flex: 1;
+  background: var(--fen-terra-l);
+  border-radius: 6px 6px 0 0;
+}
+.fen-pt-bars__bar.is-peak {
+  background: var(--fen-flame);
+}
+.fen-pt-ai {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.fen-pt-ai__ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--fen-caffe);
+  display: grid;
+  place-items: center;
+  color: var(--fen-cotta);
+  flex-shrink: 0;
+}
+.fen-pt-ai__title {
+  font: 700 13px/1.3 var(--fen-font);
+  margin-bottom: 4px;
+}
+.fen-pt-ai__text {
+  font: 400 13px/1.5 var(--fen-font);
+  color: var(--fen-muted);
+}
+
+/* ---------- brand book (marca do cliente) ---------- */
+.fen-pt-brand-hero {
+  background: #0f0f0f;
+  border-radius: var(--fen-r-lg);
+  padding: 30px 18px;
+  text-align: center;
+}
+.fen-pt-brand-hero__name {
+  font-family: 'Poppins', var(--fen-font);
+  font-weight: 800;
+  font-size: 30px;
+  color: #fff;
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+}
+.fen-pt-brand-hero__sub {
+  font-family: 'Poppins', var(--fen-font);
+  font-weight: 300;
+  font-size: 13px;
+  color: #fff;
+  letter-spacing: 0.42em;
+  margin-top: 2px;
+}
+.fen-pt-swatches {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.fen-pt-swatch {
+  flex: 1;
+}
+.fen-pt-swatch__chip {
+  height: 54px;
+  border-radius: 10px;
+  border: 1px solid var(--fen-border);
+}
+.fen-pt-swatch__name {
+  font: 600 11px/1 var(--fen-font);
+  color: var(--fen-muted);
+  margin-top: 6px;
+  text-align: center;
+}
+.fen-pt-type-aa {
+  font-family: 'Poppins', var(--fen-font);
+  font-weight: 800;
+  font-size: 30px;
+  color: var(--fen-caffe);
+}
+
+/* ---------- aprovacao ---------- */
+.fen-pt-success {
+  text-align: center;
+  padding: 40px 16px;
+}
+.fen-pt-success__ico {
+  width: 76px;
+  height: 76px;
+  border-radius: 999px;
+  background: var(--fen-success-bg);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 18px;
+}
+.fen-pt-success__title {
+  font-family: var(--fen-display);
+  font-weight: 900;
+  font-size: 24px;
+  color: var(--fen-caffe);
+}
+.fen-pt-success__text {
+  font: 400 14px/1.55 var(--fen-font);
+  color: var(--fen-muted);
+  max-width: 260px;
+  margin: 8px auto 22px;
+}
+.fen-pt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.fen-pt-chip {
+  font: 600 13px/1 var(--fen-font);
+  padding: 9px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--fen-surface-2);
+  color: var(--fen-text);
+  border: 1px solid var(--fen-border);
+}
+.fen-pt-chip.is-on {
+  background: var(--fen-terra);
+  color: #fff;
+  border-color: var(--fen-terra);
+}
+.fen-pt-textarea {
+  width: 100%;
+  min-height: 90px;
+  resize: none;
+  font: 400 14px/1.5 var(--fen-font);
+  padding: 12px;
+  border: 1.5px solid var(--fen-border);
+  border-radius: var(--fen-r-md);
+  background: var(--fen-surface);
+  color: var(--fen-text);
+  box-sizing: border-box;
+  outline: none;
+}
+.fen-pt-textarea:focus {
+  box-shadow: var(--fen-ring);
+  border-color: var(--fen-cotta);
+}
+
+/* ---------- sugestoes ---------- */
+.fen-pt-sug-hero {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--fen-caffe);
+  border: 0;
+  color: var(--fen-avorio);
+}
+.fen-pt-sug-hero__ico,
+.fen-pt-sug-card__ico {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--fen-flame);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.fen-pt-sug-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fen-pt-sug-row__text {
+  flex: 1;
+  font: 400 14px/1.45 var(--fen-font);
+  color: var(--fen-text);
+}
+.fen-pt-composer {
+  position: relative;
+  margin-top: 4px;
+}
+.fen-pt-composer input {
+  width: 100%;
+  font: 400 14px/1 var(--fen-font);
+  padding: 14px 48px 14px 16px;
+  border: 1.5px solid var(--fen-border);
+  border-radius: 999px;
+  background: var(--fen-surface);
+  box-sizing: border-box;
+  outline: none;
+  color: var(--fen-text);
+}
+.fen-pt-composer input:focus {
+  box-shadow: var(--fen-ring);
+  border-color: var(--fen-cotta);
+}
+.fen-pt-composer__send {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--fen-flame);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ============================================================
+   TRAFEGO PAGO — dashboard ao vivo (timer/feed/ROAS)
+   ============================================================ */
+.fen-pt-live-flag {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  position: relative;
+}
+.fen-pt-pulse {
+  position: relative;
+  width: 9px;
+  height: 9px;
+}
+.fen-pt-pulse__core {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #7fd17f;
+}
+.fen-pt-pulse__ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  border: 2px solid #7fd17f;
+  opacity: 0.4;
+  animation: fen-pt-ping 1.6s ease-out infinite;
+}
+.fen-pt-live-flag__label {
+  font: 700 11px/1 var(--fen-font);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fen-cotta);
+}
+.fen-pt-live-stats {
+  display: flex;
+  gap: 22px;
+  margin-top: 16px;
+  position: relative;
+}
+.fen-pt-live-stats__num {
+  font: 900 26px/1 var(--fen-display);
+  white-space: nowrap;
+}
+.fen-pt-live-stats__num--accent {
+  color: var(--fen-cotta);
+}
+.fen-pt-live-stats__cap {
+  font: 500 11px/1 var(--fen-font);
+  color: #d8cdbd;
+  margin-top: 5px;
+}
+.fen-pt-flash {
+  display: inline-block;
+  animation: fen-pt-flash 0.7s ease-out;
+}
+
+/* barra de 24h (dayparting) */
+.fen-pt-hourbar {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+}
+.fen-pt-hourbar__h {
+  flex: 1;
+  border-radius: 2px;
+}
+.fen-pt-hourbar__scale {
+  display: flex;
+  justify-content: space-between;
+  font: 500 9px/1 var(--fen-mono);
+  color: var(--fen-muted);
+  margin-top: 6px;
+}
+
+/* campanhas */
+.fen-pt-camp__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fen-pt-camp__name {
+  font: 700 15px/1.2 var(--fen-font);
+  color: var(--fen-caffe);
+}
+.fen-pt-camp__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.fen-pt-camp__meta {
+  font: 500 12px/1.3 var(--fen-font);
+  color: var(--fen-muted);
+}
+.fen-pt-camp__kpi {
+  font: 700 12px/1 var(--fen-font);
+  color: var(--fen-terra-d);
+}
+
+/* status dot (ao vivo) */
+.fen-pt-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 700 12px/1 var(--fen-font);
+}
+.fen-pt-status.is-on {
+  color: var(--fen-success);
+}
+.fen-pt-status.is-off {
+  color: var(--fen-muted);
+}
+.fen-pt-status__core {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+}
+.fen-pt-status.is-on .fen-pt-status__core {
+  background: var(--fen-success);
+}
+.fen-pt-status.is-off .fen-pt-status__core {
+  background: var(--fen-neutral-300);
+}
+.fen-pt-status__ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  border: 2px solid var(--fen-success);
+  opacity: 0.35;
+  animation: fen-pt-ping 1.6s ease-out infinite;
+}
+
+/* timeline */
+.fen-pt-timeline {
+  margin-top: 12px;
+  position: relative;
+  padding-left: 8px;
+}
+.fen-pt-tl {
+  display: flex;
+  gap: 13px;
+  position: relative;
+}
+.fen-pt-tl__line {
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: 0;
+  width: 2px;
+  background: var(--fen-border);
+}
+.fen-pt-tl__node {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--fen-terra-l);
+  display: grid;
+  place-items: center;
+  color: var(--fen-terra-d);
+  flex-shrink: 0;
+  z-index: 1;
+}
+.fen-pt-tl.is-live .fen-pt-tl__node {
+  background: var(--fen-flame);
+  color: #fff;
+}
+.fen-pt-tl__body {
+  flex: 1;
+  padding-top: 2px;
+}
+.fen-pt-tl__time {
+  font: 700 12px/1 var(--fen-mono);
+  color: var(--fen-muted);
+}
+.fen-pt-tl.is-live .fen-pt-tl__time {
+  color: var(--fen-terra);
+}
+.fen-pt-tl__txt {
+  font: 500 13px/1.4 var(--fen-font);
+  color: var(--fen-text);
+  margin-top: 3px;
+}
+.fen-pt-rise {
+  animation: fen-pt-rise 0.5s ease-out;
+}
+
+/* detalhe / metricas em grid */
+.fen-pt-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.fen-pt-metric__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--fen-muted);
+  margin-bottom: 8px;
+}
+.fen-pt-metric__label {
+  font: 600 11px/1 var(--fen-font);
+}
+.fen-pt-metric__value {
+  font: 900 24px/1 var(--fen-display);
+  color: var(--fen-terra);
+}
+.fen-pt-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.fen-pt-insight {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--fen-caffe);
+  border: 0;
+  color: var(--fen-avorio);
+}
+.fen-pt-insight__ico {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--fen-flame);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.fen-pt-insight__text {
+  font: 400 14px/1.5 var(--fen-font);
+}
+
+/* relatorio mensal — ROAS hero */
+.fen-pt-roas {
+  background: var(--fen-flame);
+  border-radius: var(--fen-r-lg);
+  padding: 20px;
+  color: #fff;
+  text-align: center;
+}
+.fen-pt-roas__kicker {
+  font: 700 11px/1 var(--fen-font);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.fen-pt-roas__big {
+  font: 900 52px/1 var(--fen-display);
+  margin: 10px 0 2px;
+}
+.fen-pt-roas__sub {
+  font: 500 14px/1.4 var(--fen-font);
+  opacity: 0.9;
+}
+.fen-pt-report-metric__label {
+  font: 600 11px/1 var(--fen-font);
+  color: var(--fen-muted);
+  margin-bottom: 7px;
+}
+.fen-pt-report-metric__value {
+  font: 900 22px/1 var(--fen-display);
+  color: var(--fen-caffe);
+}
+.fen-pt-report-metric__delta {
+  font: 700 11px/1 var(--fen-font);
+  color: var(--fen-success);
+  margin-top: 6px;
+}
+.fen-pt-wbars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 90px;
+  margin-top: 14px;
+}
+.fen-pt-wbar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.fen-pt-wbar__col {
+  width: 100%;
+  background: var(--fen-terra-l);
+  border-radius: 6px 6px 0 0;
+}
+.fen-pt-wbar__col.is-peak {
+  background: var(--fen-flame);
+}
+.fen-pt-wbar__label {
+  font: 500 10px/1 var(--fen-font);
+  color: var(--fen-muted);
+}
+
+/* alternador de superficie portal / trafego */
+.fen-pt-switch {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--fen-surface-2);
+  border: 1px solid var(--fen-border);
+  border-radius: 999px;
+  margin: 0 18px 4px;
+}
+.fen-pt-switch__btn {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font: 700 12px/1 var(--fen-font);
+  color: var(--fen-muted);
+}
+.fen-pt-switch__btn.is-on {
+  background: var(--fen-surface);
+  color: var(--fen-terra-d);
+  box-shadow: var(--fen-sh-sm);
+}
+
+/* ---------- animacoes ---------- */
+@keyframes fen-pt-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+@keyframes fen-pt-flash {
+  0% {
+    color: var(--fen-cotta);
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes fen-pt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

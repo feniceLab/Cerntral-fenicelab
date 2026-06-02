@@ -1,0 +1,291 @@
+/* ============================================================
+   AUTH — estilos específicos da superfície (prefixo .fen-auth-*)
+   Tokens e componentes vêm de @fenice/shared. Aqui só o que é
+   exclusivo da tela de login split-screen.
+   ============================================================ */
+
+.fen-auth-split {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ---------- painel da marca ---------- */
+.fen-auth-brand {
+  flex: 0 0 46%;
+  background: var(--fen-caffe);
+  color: var(--fen-avorio);
+  position: relative;
+  overflow: hidden;
+  padding: 56px 56px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.fen-auth-brand__flor {
+  position: absolute;
+  right: -120px;
+  bottom: -120px;
+  width: 460px;
+  opacity: 0.42;
+  pointer-events: none;
+}
+.fen-auth-brand__wm {
+  font-family: var(--fen-display);
+  font-weight: var(--fen-w-black);
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+.fen-auth-brand__wm .dot { color: var(--fen-cotta); }
+
+.fen-auth-brand__mid {
+  position: relative;
+  max-width: 420px;
+}
+.fen-auth-brand__mid h1 {
+  font-family: var(--fen-display);
+  font-weight: var(--fen-w-black);
+  font-size: clamp(34px, 3.4vw, 46px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.fen-auth-brand__mid h1 em {
+  font-style: italic;
+  color: var(--fen-cotta);
+}
+.fen-auth-brand__mid p {
+  font-size: 16px;
+  line-height: 1.55;
+  color: #d8cdbd;
+  margin: 18px 0 0;
+}
+.fen-auth-quote {
+  position: relative;
+  border-left: 2px solid var(--fen-cotta);
+  padding-left: 18px;
+}
+.fen-auth-quote p {
+  font-family: var(--fen-display);
+  font-style: italic;
+  font-weight: var(--fen-w-semi);
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--fen-avorio);
+  margin: 0;
+}
+.fen-auth-quote span {
+  font-size: 13px;
+  color: #9a8f7f;
+  margin-top: 8px;
+  display: block;
+}
+
+/* ---------- área do formulário ---------- */
+.fen-auth-pane {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 28px;
+}
+.fen-auth-card {
+  width: 100%;
+  max-width: 392px;
+}
+
+/* toggle de papel (cliente / agência) */
+.fen-auth-role {
+  display: flex;
+  gap: 6px;
+  background: var(--fen-surface-2);
+  border: 1px solid var(--fen-border);
+  border-radius: var(--fen-r-md);
+  padding: 5px;
+  margin-bottom: 28px;
+}
+.fen-auth-role button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font: var(--fen-w-semi) 13px/1 var(--fen-font);
+  color: var(--fen-muted);
+  padding: 9px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--fen-dur), color var(--fen-dur);
+}
+.fen-auth-role button.on {
+  background: var(--fen-surface);
+  color: var(--fen-terra-d);
+  box-shadow: var(--fen-sh-sm);
+}
+
+.fen-auth-title {
+  font-family: var(--fen-display);
+  font-weight: var(--fen-w-black);
+  font-size: 30px;
+  letter-spacing: -0.015em;
+  color: var(--fen-caffe);
+  margin: 0 0 6px;
+}
+.fen-auth-lead {
+  font-size: 14px;
+  color: var(--fen-muted);
+  margin: 0 0 26px;
+}
+
+/* campo com botão de olho (mostrar/ocultar senha) */
+.fen-auth-eyefield {
+  position: relative;
+  margin-bottom: 16px;
+}
+.fen-auth-eyefield .fen-field {
+  margin-bottom: 0;
+}
+.fen-auth-eyefield .fen-input { padding-right: 44px; }
+.fen-auth-eye {
+  position: absolute;
+  right: 6px;
+  bottom: 7px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--fen-muted);
+  display: grid;
+  place-items: center;
+  transition: color var(--fen-dur);
+}
+.fen-auth-eye.on { color: var(--fen-terra); }
+
+.fen-auth-field { margin-bottom: 16px; }
+
+.fen-auth-rowbetween {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px 0 22px;
+}
+.fen-auth-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--fen-muted);
+  cursor: pointer;
+}
+.fen-auth-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--fen-terra);
+}
+.fen-auth-link {
+  font: var(--fen-w-semi) 13px/1 var(--fen-font);
+  color: var(--fen-terra-d);
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.fen-auth-link:hover { text-decoration: underline; }
+
+.fen-auth-foot {
+  font-size: 12.5px;
+  color: var(--fen-muted);
+  text-align: center;
+  margin-top: 26px;
+}
+
+/* aviso de segurança (1º acesso) */
+.fen-auth-hint {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--fen-terra-l);
+  border-radius: var(--fen-r-md);
+  padding: 12px 14px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--fen-terra-d);
+  margin-bottom: 22px;
+}
+.fen-auth-hint svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* checklist de requisitos de senha */
+.fen-auth-reqs {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.fen-auth-reqs li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--fen-muted);
+  transition: color var(--fen-dur);
+}
+.fen-auth-reqs li .dot {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--fen-r-pill);
+  border: 1.5px solid var(--fen-argilla);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background var(--fen-dur), border-color var(--fen-dur);
+}
+.fen-auth-reqs li.ok { color: var(--fen-success); }
+.fen-auth-reqs li.ok .dot {
+  background: var(--fen-success);
+  border-color: var(--fen-success);
+}
+
+/* botão full-width do form (reaproveita .fen-btn do shared) */
+.fen-auth-submit { width: 100%; }
+
+/* tela de sucesso */
+.fen-auth-success { text-align: center; padding: 10px 0; }
+.fen-auth-success .ring {
+  width: 78px;
+  height: 78px;
+  border-radius: var(--fen-r-pill);
+  background: var(--fen-success-bg);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 20px;
+  animation: fen-auth-pop var(--fen-dur-lg) var(--fen-ease);
+}
+.fen-auth-success .fen-auth-lead {
+  max-width: 280px;
+  margin: 8px auto 24px;
+}
+
+@keyframes fen-auth-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* transição suave entre etapas */
+.fen-auth-view {
+  animation: fen-auth-fade var(--fen-dur-lg) var(--fen-ease);
+}
+@keyframes fen-auth-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 820px) {
+  .fen-auth-brand { display: none; }
+}

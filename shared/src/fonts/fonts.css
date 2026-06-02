@@ -1,0 +1,60 @@
+/* ============================================================
+   Fenice Lab — Fontes auto-hospedadas (produção / offline)
+   ------------------------------------------------------------
+   Alternativa ao @import do Google em colors_and_type.css.
+   Para usar: coloque os arquivos .woff2 nesta pasta (ver
+   fonts/README.md) e troque, no HTML, o <link>/@import do
+   Google por:  <link rel="stylesheet" href="fonts/fonts.css">
+   Os nomes de família batem com os tokens (Fraunces, Inter,
+   JetBrains Mono), então nada mais muda no CSS.
+   ============================================================ */
+
+/* ---------- Fraunces (display / títulos) ---------- */
+@font-face{
+  font-family:'Fraunces';font-style:normal;font-weight:400;font-display:swap;
+  src:local('Fraunces'),url('fraunces-400.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Fraunces';font-style:normal;font-weight:600;font-display:swap;
+  src:local('Fraunces SemiBold'),url('fraunces-600.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Fraunces';font-style:normal;font-weight:900;font-display:swap;
+  src:local('Fraunces Black'),url('fraunces-900.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Fraunces';font-style:italic;font-weight:900;font-display:swap;
+  src:url('fraunces-900-italic.woff2') format('woff2');
+}
+
+/* ---------- Inter (corpo / UI) ---------- */
+@font-face{
+  font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;
+  src:local('Inter'),url('inter-400.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;
+  src:url('inter-500.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;
+  src:url('inter-600.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;
+  src:local('Inter Bold'),url('inter-700.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;
+  src:url('inter-800.woff2') format('woff2');
+}
+
+/* ---------- JetBrains Mono (código / dados) ---------- */
+@font-face{
+  font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;
+  src:local('JetBrains Mono'),url('jetbrainsmono-400.woff2') format('woff2');
+}
+@font-face{
+  font-family:'JetBrains Mono';font-style:normal;font-weight:600;font-display:swap;
+  src:url('jetbrainsmono-600.woff2') format('woff2');
+}
