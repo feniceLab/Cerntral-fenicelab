@@ -1,24 +1,24 @@
 ---
 documento: Plano Técnico — Fase 1 (Fundação)
 produto: Sistema Central Fenice Lab
-versao: 0.1 (proposta para validar com Willian)
+versao: 1.0 (validado por Dante + Willian em 01/06)
 data: 2026-06-01
-autores: [Dante Martins, Fenice (Claude)]
+autores: [Dante Martins, Willian, Fenice (Claude)]
 base: 00-Central/PRD - Sistema Central Fenice Lab (v1).md
-status: proposta — aguardando validação técnica do Willian
+status: validado — pronto para iniciar a Fase 1 (após extração do design system)
 tags: [fenice, sistema-central, plano-tecnico, fase-1, supabase, monorepo]
 ---
 
 # 🏗️ Plano Técnico — Fase 1 (Fundação)
 
-> Ponte entre o **PRD v1.1** e o código. Resolve as 2 pendências que sobraram e desenha a fundação técnica (framework, monorepo, schema multi-tenant, Supabase, migração). **Nada aqui é código ainda** — é especificação para o Willian validar antes de construir.
-> **Princípio:** trabalhar com a verdade — propostas honestas, com prós/contras reais; o Willian (dev) tem a palavra final na parte técnica.
+> Ponte entre o **PRD v1.1** e o código. Define a fundação técnica (framework, monorepo, schema multi-tenant, Supabase, migração). **Nada aqui é código ainda** — é especificação validada por Dante + Willian.
+> **Princípio:** trabalhar com a verdade — propostas honestas, com prós/contras reais.
 
 ---
 
-## PARTE A — Decisões Pendentes (proposta para o Willian validar)
+## PARTE A — Decisões (validadas em 01/06)
 
-### A1. Framework do Frontend → **proposta: React + Vite (SPA) + TypeScript**
+### A1. Framework do Frontend → ✅ **DECIDIDO: React + Vite (SPA) + TypeScript**
 
 **Por que esta combinação se encaixa na realidade da Fenice:**
 - Os apps atuais (Suprema, Arena) já são **estáticos servidos na VPS via openresty** → React+Vite faz **build estático** e mantém o deploy por `rsync` que já funciona, **sem precisar de servidor Node na VPS** (importante: 6GB RAM, sem folga).
@@ -29,30 +29,34 @@ tags: [fenice, sistema-central, plano-tecnico, fase-1, supabase, monorepo]
 **Comparativo honesto:**
 | Opção | Prós | Contras | Veredito |
 |---|---|---|---|
-| **React + Vite (SPA)** ✅ | Build estático, ecossistema enorme, casa com Supabase, PWA fácil, deploy atual mantido | SPA puro = SEO fraco (irrelevante: portal é logado) | **Recomendado** |
+| **React + Vite (SPA)** ✅ | Build estático, ecossistema enorme, casa com Supabase, PWA fácil, deploy atual mantido | SPA puro = SEO fraco (irrelevante: portal é logado) | **Escolhido** |
 | Next.js | Poderoso, SSR | Pede runtime Node na VPS (peso) ou export estático que perde recursos | Evitar por ora |
 | Astro | Ótimo p/ estático/conteúdo | Portal é muito interativo; vira força contra | Não como base |
-| SvelteKit | Leve, rápido | Menor ecossistema; depende de familiaridade do Willian | Alternativa se o Willian preferir |
+| SvelteKit | Leve, rápido | Menor ecossistema | Descartado |
 
-**Stack de apoio proposta (validar com Willian):**
+**Stack de apoio (validada 01/06):**
 - **Linguagem:** TypeScript (segurança de tipos no multi-tenant).
-- **Estilo:** Tailwind CSS configurado com os **tokens da marca** (Terra, Cotta, Avorio, Caffè, Flame, Fraunces/Inter) → o `shared/` vira a fonte desses tokens.
+- **Estilo:** ✅ **CSS próprio do design system** — o `Fenice-Design-System.html` já traz os tokens como variáveis CSS; eles viram a base do `shared/`. **NÃO usar Tailwind.**
 - **Gráficos:** Recharts (ou similar leve) para evolução/seguidores/ROAS.
-- **Monorepo:** **pnpm workspaces** (mais leve que Turborepo para começar).
+- **Monorepo:** ✅ **pnpm workspaces** (recomendação da Fenice: mais leve e nativo; Turborepo entra depois sem retrabalho, só se a escala pedir build-cache).
 - **PWA:** vite-plugin-pwa.
 
-> ⚠️ Pergunta para o Willian: você tem mais fluência em React ou Svelte? Se Svelte, trocamos a base sem mudar o resto do plano (Supabase, schema e deploy continuam iguais).
+> ✅ Decidido (01/06): React + Vite confirmado pela dupla fundadora. (Svelte descartado.)
 
-### A2. Modelo de Cobrança das Chaves de LLM → **proposta: simples e transparente**
+### A2. LLM dos clones e cobrança → ✅ **DECIDIDO (01/06): Claude Haiku, sem cobrança no início**
 
-A decisão de produto (PRD) já trava: **Llama/Groq grátis como padrão**, GPT/Claude com **chave do próprio cliente**. Falta só o modelo comercial:
+Decisão do Dante: como há **poucos clientes** e o consumo de token será baixo, no início **não haverá cobrança** pelo conselho de IA. Os clones rodam em **Claude Haiku** (modelo barato e rápido da Anthropic, `claude-haiku-4-5`), na conta da própria Fenice.
 
-**Proposta (validar comercialmente / sessão Hormozi):**
-1. **Conselho de IA incluído (sem custo extra)** nos planos que têm Portal (Combustão e Renascimento), rodando em **Llama/Groq** — custo marginal ≈ zero para a Fenice (tier grátis).
-2. **GPT/Claude = chave do cliente** → o cliente paga o próprio uso. A Fenice **não cobra** por isso (é conveniência dele).
-3. **Add-on futuro opcional — "IA Premium Gerenciada":** para o cliente que NÃO quer trazer chave própria, a Fenice oferece GPT/Claude com a chave dela, cobrando **+R$ X/mês** (cobre o uso + margem). Só ativar quando houver demanda.
+**Modelo inicial (agora):**
+1. **LLM padrão dos clones = Claude Haiku** (chave Anthropic da Fenice). Barato; cobre o volume atual com folga.
+2. **Sem cobrança ao cliente** pelo uso de IA (incluído).
+3. A Edge Function chama a API da Anthropic com Haiku, vestindo a personalidade certa (Hormozi, Sobral...).
 
-**Por que assim:** mantém o diferencial (conselho de IA) sem risco de custo descontrolado, sem fricção de cobrança, e deixa uma porta de upsell (IA Premium) para depois. Honesto: ninguém paga por token escondido.
+**Futuro (quando escalar — rever com Hormozi):**
+- Adicionar **Groq/Llama** como fallback grátis se o volume crescer.
+- Permitir **chave do próprio cliente** (GPT/Claude) e/ou add-on "IA Premium gerenciada" com cobrança.
+
+**Por que assim:** simplicidade máxima no início (uma só LLM, uma só chave), custo controlado e previsível, e a porta de multi-LLM/cobrança fica aberta para quando fizer sentido. Honesto: começamos enxuto, sem cobrar pelo que custa centavos.
 
 ---
 
@@ -60,9 +64,11 @@ A decisão de produto (PRD) já trava: **Llama/Groq grátis como padrão**, GPT/
 
 > Objetivo da Fase 1: ter **monorepo + design system `shared/` + Supabase (auth e schema multi-tenant)** de pé, com Suprema/Arena migrados para o `shared/` **sem quebrar o que está no ar**.
 
-### B1. Stack definida (a confirmar em A1)
-- Front: React + Vite + TypeScript + Tailwind (tokens da marca) + vite-plugin-pwa.
-- Backend: Supabase (Postgres + Auth + Edge Functions + Storage de metadados).
+### B1. Stack definida (validada 01/06)
+- Front: React + Vite + TypeScript + **CSS próprio do design system** (não Tailwind) + vite-plugin-pwa.
+- Monorepo: **pnpm workspaces**.
+- Backend: Supabase (Postgres + Auth + Edge Functions + Storage de metadados) — **projeto no Supabase da empresa**.
+- LLM dos clones: **Claude Haiku** (`claude-haiku-4-5`, chave Anthropic da Fenice) — sem cobrança ao cliente no início.
 - Deploy: build estático → `rsync`/SSH → VPS Fenix (openresty), domínio por cliente (como hoje).
 - Materiais pesados: VPS (fora do Git).
 
@@ -101,15 +107,16 @@ Tabelas da Fase 1 (núcleo de auth/tenancy; demais entram nas fases seguintes):
 **Política RLS (conceito):** um usuário só enxerga linhas onde `agencia_id = sua agência` E (`cliente_id = seu cliente` OU papel é admin_central/admin_cliente com escopo). Escrever as policies + **teste de isolamento** (tentar ler dado de outro cliente e falhar) é tarefa obrigatória da Fase 1.
 
 ### B4. Setup do Supabase (Fase 1)
-1. Criar projeto `fenice-central`.
-2. Guardar `Project URL`, `anon key`, `service_role key` em **Supabase Secrets** + `.env` local (fora do Git).
+1. Criar projeto `fenice-central` **na conta Supabase da empresa**. Dono dos segredos: **Dante (admin central)**.
+2. Guardar `Project URL`, `anon key`, `service_role key` em **Supabase Secrets** + `.env` local (fora do Git). Adicionar também a **chave Anthropic (Claude Haiku)** aos secrets.
 3. Configurar **Auth** (e-mail+senha; recuperação por e-mail; sem signup público — Fenice cria os logins).
 4. Aplicar migrations do schema B3 + ligar RLS.
 5. Validar com 2 usuários de teste (1 admin central, 1 cliente) que o isolamento funciona.
 
 ### B5. Migração Suprema/Arena para `shared/` (sem quebrar produção)
+> ⏳ **Sequência decidida (01/06):** a migração só começa **depois** que o Dante enviar a **extração do design system** (em andamento). Primeiro montamos o `shared/` a partir dela, depois migramos.
 > Risco "alto" no PRD — fazer incremental:
-1. Extrair o design system mais rico (Suprema) para `shared/tokens` + `shared/components` **sem tocar no que está no ar**.
+1. Receber a extração do design system (Dante envia) → montar `shared/tokens` + `shared/components` **sem tocar no que está no ar**.
 2. Migrar **UM** cliente (ex: Arena) para consumir o `shared/` em **staging** (subdomínio de teste).
 3. Validar visualmente (paridade com produção) → só então apontar o domínio real.
 4. Repetir para a Suprema.
@@ -118,7 +125,7 @@ Tabelas da Fase 1 (núcleo de auth/tenancy; demais entram nas fases seguintes):
 ### B6. Ambiente e segredos
 - `.env.example` versionado (só nomes das variáveis).
 - Valores reais em Supabase Secrets / `.env` local **nunca no Git**.
-- Chaves de LLM de cliente → criptografadas na tabela `chaves_llm` (fase do Conselho).
+- Chaves de LLM de cliente → criptografadas na tabela `chaves_llm` (fase futura).
 
 ### B7. Definição de Pronto da Fase 1 (Definition of Done)
 - [ ] Monorepo criado com pnpm workspaces + estrutura B2.
@@ -131,29 +138,27 @@ Tabelas da Fase 1 (núcleo de auth/tenancy; demais entram nas fases seguintes):
 
 ---
 
-## PARTE C — Checklist de Validação com o Willian
+## PARTE C — Status das decisões (validado 01/06)
 
-> Levar estas perguntas para a reunião de validação:
-
-1. **Framework:** React+Vite ok? Ou prefere Svelte/outro? (muda só a base do front)
-2. **Monorepo:** pnpm workspaces serve, ou prefere Turborepo/npm workspaces?
-3. **Estilo:** Tailwind com tokens da marca, ou CSS próprio do design system?
-4. **Schema/RLS:** revisar as tabelas da Fase 1 e o conceito de RLS; falta alguma tabela no núcleo?
-5. **Migração:** Arena ou Suprema primeiro? Tem staging/subdomínio de teste disponível?
-6. **Supabase:** quem cria o projeto e guarda as keys? (definir dono dos secrets)
-7. **Deploy:** o `deploy.sh` atual cobre build estático do Vite, ou precisa ajustar?
-8. **Cobrança LLM (A2):** o modelo proposto fecha, ou querem o add-on "IA Premium" já no lançamento?
+1. **Framework:** ✅ React + Vite.
+2. **Monorepo:** ✅ pnpm workspaces (recomendação da Fenice).
+3. **Estilo:** ✅ CSS próprio do design system (não Tailwind).
+4. **Schema/RLS:** ⏳ Willian revisa as 5 tabelas-núcleo na construção (seguimos com a proposta, ajustável).
+5. **Migração:** ✅ inicia após o Dante enviar a extração do design system. Cliente-piloto a definir (recomendação: Arena, por ser mais simples).
+6. **Supabase:** ✅ projeto na conta da empresa; dono dos segredos = Dante (admin central).
+7. **Deploy:** ⏳ confirmar com o Willian se o `deploy.sh` atual cobre o build do Vite.
+8. **LLM/cobrança:** ✅ Claude Haiku, sem cobrança no início (poucos clientes, baixo consumo).
 
 ---
 
-## Sequência sugerida (sem datas fixas — depende do aval do Willian)
-1. Validar Parte A + B com o Willian (esta reunião).
-2. Coletar as 5 credenciais 🟢 do PRD §12.1 (Supabase, Telegram, Groq, VPS, GitHub).
-3. Criar monorepo + `shared/` (tokens da marca).
+## Sequência sugerida
+1. ✅ Validar Parte A + B (feito 01/06).
+2. Coletar as 5 credenciais 🟢 do PRD §12.1 (Supabase, Telegram, Groq/—, VPS, GitHub) + chave Anthropic.
+3. Criar monorepo + `shared/` (tokens da marca) — **após extração do design system**.
 4. Subir Supabase (auth + schema + RLS) + teste de isolamento.
 5. Migrar 1 cliente para `shared/` em staging → validar → produção.
 6. Fechar a Fase 1 (Definition of Done B7) → seguir para a Fase 2 (Portal do Cliente — núcleo).
 
 ---
 
-*Plano Técnico Fase 1 · v0.1 (proposta) · Fenice Lab · 01/06/2026 · validar com Willian antes de construir. Sem código nesta etapa.*
+*Plano Técnico Fase 1 · v1.0 (validado) · Fenice Lab · 01/06/2026 · aguardando: extração do design system (Dante) + confirmação do deploy.sh (Willian) → inicia a Fase 1. Sem código nesta etapa.*
