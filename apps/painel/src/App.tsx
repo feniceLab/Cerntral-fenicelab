@@ -4,7 +4,7 @@ import './styles.css';
 
 /** Painel reduzido: SÓ o menu Clientes (lista os clientes reais via /api/clients).
  *  Clicar num card com portal (Arena/Suprema) abre o portal do cliente embutido.
- *  (CI: deploy por app.) */
+ *  (CI: deploy por app · v2.) */
 export function App() {
   return (
     <div className="fen-pn-stage">
