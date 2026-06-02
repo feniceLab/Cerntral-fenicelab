@@ -20,7 +20,7 @@ const ITEMS: ([PortalTab, ScreenIconName, string] | null)[] = [
 export function BottomNav({ tab, onNavigate, onFab }: BottomNavProps) {
   return (
     <nav className="fen-pt-nav">
-      {ITEMS.map((it, i) => {
+      {ITEMS.map((it) => {
         if (!it) {
           return (
             <div key="fab" className="fen-pt-nav__fab-slot">
