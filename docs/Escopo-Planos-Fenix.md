@@ -1,7 +1,7 @@
 ---
 documento: Escopo & Planos da Fênix
 empresa: Fenice Lab
-versao: 1.0
+versao: 1.1
 data: 2026-06-02
 autores: [Dante Martins, Fenice (Claude)]
 validado_com: Alex Hormozi (clone) — oferta/valor
@@ -26,7 +26,7 @@ Para o negócio que precisa existir com identidade de verdade e presença diári
 
 ### 🔥🔥 COMBUSTÃO — R$ 2.000/mês  *(plano-foco)*
 **"Sua marca vira presença forte e começa a converter."**
-Para quem quer presença digital robusta, reposicionamento de marca completo e mais conteúdo trabalhando pela conversão.
+Para quem quer presença digital robusta, reposicionamento de marca completo, mais conteúdo e o conselho de IA trabalhando pela conversão.
 
 ### 🔥🔥🔥 RENASCIMENTO — R$ 3.000/mês
 **"Sua marca vende online, com estratégia dedicada."**
@@ -51,10 +51,10 @@ Para quem vende produtos no digital e quer o pacote completo: e-commerce + asses
 | **Assessoria personalizada e estratégica** | — | — | ✅ |
 | **Cronograma + agendamento de postagens** | ✅ | ✅ | ✅ |
 | **Processo de aprovação (portal + Telegram)** | ✅ | ✅ | ✅ |
-| **Atendimento Telegram + conselho de IA** | ✅ | ✅ | ✅ |
+| **Atendimento via Telegram** | ✅ | ✅ | ✅ |
 | **App/Portal (relatórios, cronograma, métricas)** | ✅ | ✅ | ✅ premium |
 | **Calls mensais** | 1 | 1 | 2 |
-| 🎁 **Conselho de 13 IAs (bônus)** | ✅ | ✅ | ✅ |
+| 🎁 **Conselho de 13 IAs** | — | ✅ | ✅ |
 
 > Volume mensal aproximado — Reels: Faísca ≈4 · Combustão ≈8 · Renascimento ≈12. Carrosséis: ≈4 · ≈4 · ≈8. Stories: ≈60/mês (A e B) · ≈90/mês renovados (C).
 
@@ -69,13 +69,14 @@ Para quem vende produtos no digital e quer o pacote completo: e-commerce + asses
 - **Conteúdo (Reels, carrosséis, stories, stop motions):** presença diária e criativos que definem o novo posicionamento e design.
 - **E-commerce (Renascimento):** sua loja online completa — todo mundo sabe que e-commerce não é barato; é o salto do topo.
 - **Assessoria personalizada e estratégica (Renascimento):** acompanhamento estratégico dedicado, não só execução.
-- **Portal/App + Telegram com conselho de IA:** transparência total — o cliente vê cronograma, métricas e ROAS, aprova post a post e conversa com 13 conselheiros de IA. Nenhuma agência no Brasil entrega isso.
+- **App/Portal + Telegram:** transparência total — o cliente vê cronograma, métricas e ROAS, e aprova post a post (no portal e no Telegram). Disponível em todos os planos.
+- **Conselho de 13 IAs (Combustão e Renascimento):** o cliente conversa com 13 conselheiros de IA 24/7, pede ideias e nenhuma sugestão se perde. Nenhuma agência no Brasil entrega isso — é uma das alavancas de upgrade.
 
 ---
 
 ## A lógica dos degraus (a "sensação de ganho")
 
-- **Faísca → Combustão (+R$500):** o cliente sai do mínimo e ganha **presença digital de verdade** — mais conteúdo (reposicionamento + design), **stop motions**, **landing page**, **Google Meu Negócio** e **manual de marca completo**. Sensação: *"agora minha marca está viva."*
+- **Faísca → Combustão (+R$500):** o cliente sai do mínimo e ganha **presença digital de verdade** — mais conteúdo (reposicionamento + design), **stop motions**, **landing page**, **Google Meu Negócio**, **manual de marca completo** e o **conselho de 13 IAs**. Sensação: *"agora minha marca está viva."*
 - **Combustão → Renascimento (+R$1.000):** entra o **e-commerce** (loja online não é barata) + **assessoria personalizada e estratégica** + mais volume de conteúdo + portal premium + 2ª call. Sensação: *"agora minha marca vende e tem estratégia dedicada."*
 
 ---
@@ -88,9 +89,10 @@ Para quem vende produtos no digital e quer o pacote completo: e-commerce + asses
 
 ---
 
-## 🎁 Bônus — Conselho de 13 IAs
+## 🎁 Bônus — Conselho de 13 IAs (Combustão e Renascimento)
 
-Todo plano inclui acesso ao **conselho de 13 mentores de IA** (Hormozi, Sobral, Jobs e mais 10), 24/7, dentro do painel e do Telegram. O cliente conversa, pede ideias e nenhuma sugestão se perde. **É um diferencial que nenhuma agência da região oferece** — incluído sem custo.
+Os planos **Combustão e Renascimento** incluem acesso ao **conselho de 13 mentores de IA** (Hormozi, Sobral, Jobs e mais 10), 24/7, dentro do painel e do Telegram. O cliente conversa, pede ideias e nenhuma sugestão se perde. **É um diferencial que nenhuma agência da região oferece.**
+O Faísca **não** inclui o conselho — é uma das **alavancas de upgrade** a usar na proposta ("subindo para o Combustão, você ainda ganha um conselho de 13 especialistas de IA 24/7").
 
 ---
 
@@ -110,9 +112,9 @@ Garantimos o que controlamos 100%: **seus criativos no prazo e no padrão combin
 
 1. Apresentar **do Renascimento para baixo** (ancorar valor no topo) → Combustão vira o "passo sensato" (plano-foco) → Faísca é o "sim fácil".
 2. Traduzir feature em **sensação** (não "design system", e sim "sua marca de outro nível").
-3. Destacar o **portal + conselho de IA** como magia/diferencial, não como item de lista.
+3. Usar o **conselho de IA** e o **e-commerce** como **âncoras de upgrade** (Faísca→Combustão e Combustão→Renascimento).
 4. Fazer o cliente calcular **quanto vale um cliente novo pra ele** — o preço some diante da margem que geramos.
 
 ---
 
-*Escopo & Planos da Fênix · v1.0 · Fenice Lab · 02/06/2026 · oficial. Revisar margem real ao atingir 15 clientes (sessão Hormozi).*
+*Escopo & Planos da Fênix · v1.1 · Fenice Lab · 02/06/2026 · oficial. Conselho de IA gated a Combustão+. Revisar margem real ao atingir 15 clientes (sessão Hormozi).*
