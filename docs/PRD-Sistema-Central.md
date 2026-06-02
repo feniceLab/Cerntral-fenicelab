@@ -26,7 +26,7 @@ São **dois produtos no mesmo sistema**, separados por login:
 1. **Portal do Cliente** — onde cada cliente (ex: Suprema Pizza) acompanha seu trabalho com total transparência: cronograma, métricas em tempo real, aprovações, brand book, galeria e conselho de IA.
 2. **Painel da Fenice (Admin)** — o cockpit onde a agência gerencia todos os clientes, aprovações, calendário consolidado, relatórios, agenda e operação.
 
-O sistema é projetado **multi-tenant desde o início** (preparado para virar produto white-label vendido a outras agências), e integra-se a Instagram/Facebook/Google (métricas e publicação automática), Telegram (notificações, aprovações e clones), e LLMs (Llama via Groq, GPT, Claude).
+O sistema é projetado **multi-tenant desde o início** (preparado para virar produto white-label vendido a outras agências), e integra-se a Instagram/Facebook/Google (métricas e publicação automática), Telegram (notificações, aprovações e clones), e LLMs (Claude Haiku no início; multi-LLM no futuro).
 
 **Objetivo de negócio:** escalar a Fenice de gestão manual cliente-a-cliente para uma operação orquestrada que suporte **15 clientes em 6 meses e 30-50 em 1 ano**, e eventualmente ser licenciada para outras agências.
 
@@ -73,7 +73,7 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 - Painel da Fenice (9 menus — ver §8).
 - Integração de métricas (Instagram/Facebook/Google) com sync horário.
 - Aprovação de criativos (portal + Telegram) com rastro.
-- Conselho de clones de IA (multi-LLM).
+- Conselho de clones de IA (Claude Haiku no início).
 - Notificações e bot do Telegram (1 bot, multi-grupo).
 - Calendário de postagens (cliente vê o dele; Fenice vê todos).
 - Upload de material pelo cliente com triagem invisível.
@@ -85,6 +85,7 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 ### Fora do escopo (v1 — futuro)
 - Publicação automática no Instagram (entra em fase posterior, mas arquitetura preparada).
 - Cobrança/boleto/Pix via API de banco (Fase 2 do financeiro).
+- Multi-LLM (Groq/Llama fallback + chave do cliente) e cobrança de IA.
 - TikTok (add-on futuro).
 - White-label comercializado (arquitetura preparada, venda depois).
 - App nativo iOS/Android (PWA cobre por ora).
@@ -155,8 +156,8 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 - RF-29. `/reuniao`: convocar todos para debater um tema.
 - RF-30. Clone padrão = **"Gerente de Operação"** (contexto de todos os clones + foco em operação/crescimento; dá métricas e sugestões).
 - RF-31. Clones acessam dados do cliente (métricas, cronograma) para respostas contextualizadas.
-- RF-32. Botão de escolha de LLM: Llama (Groq, grátis) / GPT / Claude.
-- RF-33. Sem limite de mensagens (Llama é fallback de custo).
+- RF-32. LLM dos clones: **Claude Haiku** (`claude-haiku-4-5`) como padrão inicial (conta Fenice, sem cobrança ao cliente — poucos clientes/baixo consumo). Botão multi-LLM (Groq/Llama + GPT/Claude com chave do cliente) = **fase futura**.
+- RF-33. Sem limite de mensagens (custo controlado pelo modelo barato; multi-LLM/fallback no futuro).
 - RF-34. Histórico de conversas + área "Sugestões dos clones" derivada das conversas.
 - RF-35. Fenice lê todas as conversas (não são privadas ao cliente).
 
@@ -168,7 +169,7 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 
 ### 6.9 Portal do Cliente — Configurações
 - RF-40. Dados da conta/empresa, endereço, links, cardápio.
-- RF-41. Campo seguro para colar chave de LLM (GPT/Claude) + escolher modelo padrão.
+- RF-41. (Futuro) Campo seguro para colar chave de LLM (GPT/Claude) + escolher modelo padrão — quando o multi-LLM for ativado.
 - RF-42. Tema claro/escuro.
 - RF-43. Troca de senha.
 
@@ -226,7 +227,7 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 - RF-74. Editar design system compartilhado (reflete em todos os clientes).
 - RF-75. Template de cliente.
 - RF-76. Gestão de acessos da equipe.
-- RF-77. Integrações (Meta, Telegram, Supabase, Groq, Drive).
+- RF-77. Integrações (Meta, Telegram, Supabase, Anthropic/Claude, Drive).
 
 ### 6.21 Módulo Financeiro (só Admin Central)
 - RF-78. Subir notas fiscais de ferramentas/serviços.
@@ -273,11 +274,11 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 
 - RNF-01. **Multi-tenant** com isolamento total (agência → cliente). RLS (Row Level Security) no banco.
 - RNF-02. **PWA responsivo** (instalável no celular, funciona bem em mobile).
-- RNF-03. **Segurança:** credenciais nunca no código; variáveis de ambiente/secrets; chaves de LLM dos clientes criptografadas no banco.
+- RNF-03. **Segurança:** credenciais nunca no código; variáveis de ambiente/secrets; chaves de LLM (incl. futuras dos clientes) criptografadas no banco.
 - RNF-04. **Performance:** dashboard carrega < 3s; métricas servidas de cache do banco (não chamar API externa a cada visita).
 - RNF-05. **Escala:** suportar 50 clientes sem reescrita.
 - RNF-06. **Backup automático** dos dados (cronogramas, aprovações, materiais metadados).
-- RNF-07. **Disponibilidade:** se uma LLM falhar, fallback automático para Llama/Groq.
+- RNF-07. **Disponibilidade:** Claude Haiku como LLM dos clones; se indisponível, tratar erro graciosamente (multi-LLM/fallback no futuro).
 - RNF-08. **Auditoria:** toda aprovação/decisão com usuário + timestamp.
 - RNF-09. **Temas:** claro/escuro por cliente.
 - RNF-10. **Acessibilidade básica** (contraste, navegação) e i18n preparado (PT-BR padrão).
@@ -295,11 +296,11 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
   - `clientes/<slug>/` — dados/branding específicos de cada cliente.
   - `template-cliente/` — molde para cliente novo.
   - `deploy.sh` — deploy unificado por domínio.
-- **Frontend:** PWA (a definir framework no plano técnico — provável React/Vite ou similar leve). Hospedado na **VPS Fenix** via openresty (deploy rsync/SSH), domínio por cliente.
-- **Backend/Dados/Auth:** **Supabase** (nuvem gerenciada) — Postgres + Auth + Storage(metadados) + **Edge Functions** (cérebro: clones, gateway LLM, webhooks Telegram, jobs de métricas).
+- **Frontend:** **React + Vite + TypeScript** (SPA/PWA), **CSS próprio do design system** (não Tailwind), **pnpm workspaces**. Hospedado na **VPS Fenix** via openresty (deploy rsync/SSH), domínio por cliente.
+- **Backend/Dados/Auth:** **Supabase** (conta da empresa) — Postgres + Auth + Storage(metadados) + **Edge Functions** (cérebro: clones, gateway LLM, webhooks Telegram, jobs de métricas).
 - **Materiais pesados** (vídeos/fotos): na **VPS Fenix** (não no Git, não no Supabase Storage por custo).
 - **Cérebro de automação:** **Supabase Edge Functions** (n8n DESCARTADO — ver §13). n8n permanece disponível no painel ICP caso futuro precise.
-- **LLMs:** Groq (Llama, padrão/fallback) + OpenAI (GPT) + Anthropic (Claude), via gateway nas Edge Functions.
+- **LLMs:** **Claude Haiku (Anthropic)** como padrão inicial dos clones (conta Fenice, sem cobrança — decisão 01/06). Futuro: gateway multi-LLM (Groq/Llama como fallback grátis + GPT + chave do próprio cliente).
 - **Mensageria:** Telegram Bot API (1 bot).
 - **Métricas:** Meta Graph API (IG/FB) + Google APIs; sync horário via cron/Edge Function → grava histórico no Postgres.
 
@@ -327,7 +328,7 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 - **sugestoes_clones** (id, cliente_id, clone, texto, origem_conversa_id).
 - **agenda** (id, agencia_id, cliente_id?, titulo, data_hora, local, obs, lembretes_status).
 - **financeiro** (id, agencia_id, tipo [nota|custo_fixo|custo_variavel], valor, vencimento, anexo_url, status) — só admin central.
-- **chaves_llm** (id, cliente_id, provedor [openai|anthropic], chave_criptografada).
+- **chaves_llm** (id, cliente_id, provedor [openai|anthropic], chave_criptografada) — só quando multi-LLM for ativado (futuro).
 - **telegram_grupos** (id, cliente_id, chat_id).
 
 ---
@@ -338,10 +339,10 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 |---|---|---|
 | **Supabase** | auth, banco, edge functions, storage | URL + anon + service_role |
 | **Telegram Bot API** | notificações, aprovações, clones | bot token + chat_ids |
+| **Anthropic (Claude Haiku)** | LLM dos clones (padrão inicial) | API key (conta Fenice) |
 | **Meta Graph API** | métricas IG/FB, ROAS, publicação | App ID/Secret/Token + permissões |
 | **Google APIs** | métricas (Business/Analytics) | Cloud project + OAuth/API key |
-| **Groq** | Llama (LLM padrão/fallback) | API key |
-| **OpenAI / Anthropic** | GPT / Claude (chave do cliente) | API key (do cliente, criptografada) |
+| **Groq / OpenAI / chave do cliente** | multi-LLM (futuro) | API key (futuro) |
 | **Apify** | análise de Instagram no onboarding | token |
 | **Google Drive** | upload/repositório de imagens | MCP/OAuth |
 | **Asaas/Inter** (Fase 2) | cobrança Pix/boleto | API key |
@@ -349,12 +350,12 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 
 ### 12.1 Credenciais a coletar — checklist (responde "o que preciso pegar para tocar do início ao fim")
 
-> Regra de ouro: **nenhuma credencial vai pro Git.** Tudo em variáveis de ambiente / Supabase Secrets. Chaves de LLM dos clientes ficam **criptografadas no banco**.
+> Regra de ouro: **nenhuma credencial vai pro Git.** Tudo em variáveis de ambiente / Supabase Secrets.
 
 **🟢 PEGAR AGORA (mínimo para começar Fases 1-3 sem interromper):**
-1. **Supabase** — criar projeto → `Project URL`, `anon key`, `service_role key`. (auth + banco + Edge Functions)
-2. **Telegram Bot** — falar com @BotFather → `bot token`. + pegar o `chat_id` de cada grupo (cliente + canal central).
-3. **Groq** — conta → `API key` (Llama grátis = LLM padrão dos clones).
+1. **Supabase** — criar projeto na conta da empresa → `Project URL`, `anon key`, `service_role key`. (auth + banco + Edge Functions)
+2. **Telegram Bot** — @fenicebot_bot já criado → `bot token`. + pegar o `chat_id` de cada grupo (cliente + canal central).
+3. **Anthropic** — conta → `API key` (Claude Haiku = LLM dos clones, conta Fenice).
 4. **VPS Fenix** — já temos: IP `207.58.172.147`, chave `~/.ssh/fenix`, container openresty `ic-openresty-mVOb`. (confirmar acesso)
 5. **GitHub (feniceLab)** — já temos via MCP `github-fenicelab`. Repo `Cerntral-fenicelab`.
 
@@ -362,12 +363,12 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 6. **Meta (Facebook/Instagram)** — criar App no Meta for Developers → `App ID`, `App Secret`, `Access Token` (longa duração) + permissões: `instagram_basic`, `instagram_manage_insights`, `pages_read_engagement`, `ads_read` (ROAS) e, p/ publicar depois, `instagram_content_publish`. Conectar a conta @asupremapizza ao Business.
 7. **Google** — projeto no Google Cloud → habilitar APIs (Business Profile / Analytics) → `OAuth client` ou `API key`.
 
-**🟠 OPCIONAL / POR CLIENTE / FUTURO:**
-8. **OpenAI / Anthropic** — chave do **próprio cliente** (ele cola no portal; guardamos criptografada). Não é credencial da Fenice.
+**🟠 OPCIONAL / FUTURO:**
+8. **Groq / OpenAI / chave do cliente** — só quando o multi-LLM for ativado (futuro).
 9. **Apify** — já temos token (uso só no onboarding p/ análise de Instagram; **não salvar em arquivo**).
 10. **Asaas/Inter** (cobrança Pix/boleto) — só na Fase 2 do financeiro.
 
-**Onde guardar:** as 🟢 viram secrets no Supabase + um `.env` local fora do Git. As por-cliente (8) entram criptografadas na tabela `chaves_llm`.
+**Onde guardar:** as 🟢 viram secrets no Supabase + um `.env` local fora do Git.
 
 ---
 
@@ -378,7 +379,7 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 - ✅ **Supabase** = auth + banco + Edge Functions (cérebro). **n8n DESCARTADO** (disponível no ICP se um dia precisar de automação visual complexa).
 - ✅ Telegram: **1 bot** em vários grupos (não 1 por cliente).
 - ✅ Clones = personalidades/prompts no mesmo bot (não bots separados).
-- ✅ LLM: **Groq/Llama** padrão+fallback; GPT/Claude com chave do cliente (criptografada). **Llama local na VPS descartado** (6GB sem GPU).
+- ✅ LLM (inicial, 01/06): **Claude Haiku** (`claude-haiku-4-5`, conta Fenice, sem cobrança ao cliente — poucos clientes/baixo token). Multi-LLM (Groq/Llama fallback + chave do cliente) = **futuro**. **Llama local na VPS descartado** (6GB sem GPU).
 - ✅ Login e-mail+senha; Fenice cria os logins; senha inicial `nomeempresa123`.
 - ✅ Portal completo do cliente; calendário só-visual pro cliente.
 - ✅ Aprovação por post + cronograma completo; 24h auto-aprova; portal+Telegram.
@@ -392,6 +393,7 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 - ✅ **Lembretes de agenda:** Fenice sempre; cliente só quando o envolve. (01/06)
 - ✅ **Clones:** 1 `.md` por clone em `shared/clones/` (frontmatter + prompt). (01/06)
 - ✅ **Identidade visual:** segue o Manual da Marca (paleta terrosa, Fraunces/Inter, `fenice.`). (01/06)
+- ✅ **Stack (01/06, validada Dante+Willian):** React + Vite + TypeScript, **CSS próprio do design system** (não Tailwind), **pnpm workspaces**, Supabase **da conta da empresa** (dono dos segredos: Dante). LLM dos clones: **Claude Haiku** sem cobrança no início.
 
 ---
 
@@ -403,6 +405,7 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 - **🔥🔥 COMBUSTÃO (~R$4-5k/mês + mídia):** tudo da Faísca + tráfego pago (Meta/Google) + landing + **acesso ao portal** (métricas, aprovações, conselho IA).
 - **🔥🔥🔥 RENASCIMENTO (sob proposta):** tudo + e-commerce + site + portal premium.
 - **Add-ons:** TikTok +R$500/mês · E-commerce +R$1.000.
+- Conselho de IA (Claude Haiku) **incluído sem custo extra** no início — sem cobrança ao cliente pelo uso.
 - Apresentação: ancorar no Renascimento; traduzir feature em sensação; portal/IA como diferencial-magia.
 - ⚠️ Revisar margem real com 15 clientes (consultar Hormozi).
 
@@ -412,17 +415,17 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 
 > Reformulado (n8n removido do plano original). Cada fase entrega algo usável.
 
-- **Fase 0 — PRD + credenciais** (este documento + coletar as 5 credenciais 🟢 do checklist §12.1: Supabase, Telegram, Groq, VPS, GitHub).
+- **Fase 0 — PRD + credenciais** (este documento + coletar as 5 credenciais 🟢 do checklist §12.1: Supabase, Telegram, Anthropic, VPS, GitHub).
 - **Fase 1 — Fundação:** monorepo + `shared/` (design system) + Supabase (projeto, schema multi-tenant, auth). Migrar Suprema/Arena para usar `shared/` sem quebrar produção.
 - **Fase 2 — Portal do Cliente (núcleo):** login, dashboard, calendário (visual), brand book, galeria. Dados da Suprema como piloto.
 - **Fase 3 — Aprovações + Telegram:** bot único, fluxo aprovar/alterar (portal+Telegram), notificações, canal central.
-- **Fase 4 — Conselho de Clones (IA):** Edge Functions + gateway multi-LLM (Groq/GPT/Claude) + 13 personalidades + Gerente de Operação + `/reuniao`.
+- **Fase 4 — Conselho de Clones (IA):** Edge Functions + Claude Haiku + 13 personalidades + Gerente de Operação + `/reuniao`. (multi-LLM = futuro)
 - **Fase 5 — Métricas:** integração Meta/Google, sync horário, gráficos de evolução, ROAS, relatório mensal automático.
 - **Fase 6 — Painel Fenice completo:** dashboard geral, calendário consolidado, triagem de uploads, agenda + lembretes, relatórios gerais.
 - **Fase 7 — Onboarding assistido:** ficha + análise IG + geração de brand book/design system + criação automática (login, grupo, estrutura).
 - **Fase 8 — Financeiro (Fase 1):** notas, custos, alertas de pagamento.
 - **Fase 9 — Publicação automática (Meta):** agendamento + publicação via API.
-- **Futuro:** TikTok, cobrança via banco (Asaas/Inter), white-label comercial.
+- **Futuro:** multi-LLM + cobrança de IA, TikTok, cobrança via banco (Asaas/Inter), white-label comercial.
 
 ---
 
@@ -431,7 +434,7 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 | Risco | Impacto | Mitigação |
 |---|---|---|
 | Migrar Suprema/Arena quebrar produção | alto | migração incremental, testar em staging, manter deploy atual no ar |
-| Custo de IA dos clones escalar | médio | Llama/Groq como padrão grátis; GPT/Claude só com chave do cliente |
+| Custo de IA dos clones escalar | baixo→médio | Claude Haiku (barato) no início; multi-LLM/fallback e chave do cliente quando crescer |
 | VPS 6GB RAM estourar | médio | backend pesado no Supabase (nuvem), não na VPS |
 | Sistema central virar "ruído" (Telegram) | médio | curadoria do que notifica; hierarquia de canais |
 | Meta API mudar/limitar | médio | cache local das métricas; fallback Apify |
@@ -446,10 +449,10 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 - [x] Lembretes de agenda: **Fenice sempre; cliente só quando o envolve**. ✅ 01/06
 - [x] Bot: **@fenicebot_bot** (criado) + permissões da §5 (RBAC). ✅ 01/06
 - [x] Formato de exportação das 13 personalidades: **1 `.md` por clone em `shared/clones/`**. ✅ 01/06
-- [ ] Framework do frontend — *decisão técnica, resolver no plano técnico da Fase 1 (não bloqueia o PRD)*.
-- [ ] Modelo de cobrança das chaves de LLM — *decisão comercial, resolver junto da precificação (sessão Hormozi)*.
+- [x] Framework do frontend: **React + Vite + TS, CSS do design system, pnpm workspaces** (validado Dante+Willian). ✅ 01/06
+- [x] LLM/cobrança: **Claude Haiku, sem cobrança no início**; multi-LLM e cobrança = futuro (rever com Hormozi). ✅ 01/06
 
-> ✅ **Todas as pendências de PRODUTO resolvidas em 01/06. Restam apenas 2 decisões (1 técnica, 1 comercial) que não bloqueiam o início da construção.**
+> ✅ **Todas as pendências resolvidas (01/06).** Restam apenas itens de execução a confirmar com o Willian durante a construção: revisão fina do schema/RLS e se o `deploy.sh` cobre o build do Vite.
 
 ---
 
@@ -464,4 +467,4 @@ A Fenice tem 2 clientes (Suprema, Arena) e projeta 15 em 6 meses. O custo de NÃ
 
 ---
 
-*PRD v1.1 · Fenice Lab · 01/06/2026 · todas as pendências de produto resolvidas. Vinculado ao Manual da Marca. Próximo passo: plano técnico da Fase 1 (escolher framework + montar monorepo/shared).*
+*PRD v1.1 · Fenice Lab · 01/06/2026 · decisões de 01/06 incorporadas (Claude Haiku sem cobrança; stack validada). Vinculado ao Manual da Marca. Próximo passo: Fase 1 (Fundação) após extração do design system.*
