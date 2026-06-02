@@ -2,7 +2,8 @@ import { Sidebar } from './components/Sidebar';
 import { Clientes } from './screens/Clientes';
 import './styles.css';
 
-/** Painel reduzido: SÓ o menu Clientes (lista os clientes reais via /api/clients). */
+/** Painel reduzido: SÓ o menu Clientes (lista os clientes reais via /api/clients).
+ *  Clicar num card com portal (Arena/Suprema) abre o portal do cliente embutido. */
 export function App() {
   return (
     <div className="fen-pn-stage">
