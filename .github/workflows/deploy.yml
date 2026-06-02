@@ -54,7 +54,8 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      # strictDepBuilds=false: não falha por build script ignorado (esbuild funciona via pacote de plataforma no Linux)
+      - run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
 
       - name: SSH setup
         run: |
