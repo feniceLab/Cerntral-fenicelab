@@ -2,7 +2,7 @@ import { Avatar } from '@fenice/shared';
 import { PnIcon, type PnIconName } from './PnIcon';
 import { SELO_TERRA } from '../assets';
 
-export type NavKey = 'dashboard' | 'aprovacoes' | 'clientes' | 'triagem' | 'calendario' | 'trafego';
+export type NavKey = 'clientes';
 
 interface NavItem {
   key: NavKey;
@@ -12,12 +12,7 @@ interface NavItem {
 }
 
 const ITEMS: NavItem[] = [
-  { key: 'dashboard', icon: 'grid', label: 'Dashboard' },
-  { key: 'aprovacoes', icon: 'checkSq', label: 'Aprovações', badge: 3 },
   { key: 'clientes', icon: 'users', label: 'Clientes' },
-  { key: 'triagem', icon: 'inbox', label: 'Triagem', badge: 3 },
-  { key: 'calendario', icon: 'calendar', label: 'Calendário' },
-  { key: 'trafego', icon: 'target', label: 'Tráfego Pago' },
 ];
 
 export interface SidebarProps {

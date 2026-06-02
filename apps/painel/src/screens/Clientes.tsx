@@ -1,87 +1,82 @@
-import { Avatar, Card, Tag } from '@fenice/shared';
-import { Topbar, Search, Scroll } from '../components/Chrome';
-import { PnIcon } from '../components/PnIcon';
-import { PnButton } from '../components/PnButton';
-import { CLIENTS, type Cliente } from '../data';
+import { useEffect, useState } from 'react';
+import { Card } from '@fenice/shared';
+import { Topbar, Scroll } from '../components/Chrome';
 
-export interface ClientesProps {
-  onCliente: (c: Cliente) => void;
+const API =
+  `${(import.meta as any).env?.VITE_TRAFEGO_URL || 'https://relatorios.fenicelab.com.br'}/api/clients`;
+
+interface ApiCliente {
+  name: string;
+  slug: string;
+  agencia?: string;
+  validated?: boolean;
+  pending_status?: string | null;
+  instagram?: { username?: string } | null;
 }
 
-export function Clientes({ onCliente }: ClientesProps) {
-  const cols = '2.2fr 1fr 1fr 1fr 40px';
+function badge(bg: string, color: string, label: string) {
+  return (
+    <span className="fen-badge" style={{ background: bg, color }}>
+      {label}
+    </span>
+  );
+}
+
+export function Clientes() {
+  const [clients, setClients] = useState<ApiCliente[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(API)
+      .then((r) => r.json())
+      .then((d) => setClients(d.clients ?? []))
+      .catch((e) => setErro(String(e)));
+  }, []);
+
+  const total = clients?.length ?? 0;
+
   return (
     <>
-      <Topbar kicker="3 ativos · meta 15" title="Clientes">
-        <Search ph="Buscar cliente…" />
-        <PnButton variant="primary" pnIcon="plus">
-          Adicionar
-        </PnButton>
-      </Topbar>
+      <Topbar kicker={clients ? `${total} clientes` : erro ? 'erro' : 'carregando…'} title="Clientes" />
       <Scroll>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-          <span style={{ font: '600 12px/1 var(--fen-font)', color: 'var(--fen-muted)' }}>
-            clique num cliente para ver o tráfego ao vivo →
-          </span>
-        </div>
-        <Card pad={0} style={{ overflow: 'hidden' }}>
+        {erro && <Card>Não consegui carregar os clientes: {erro}</Card>}
+        {!clients && !erro && <Card>Carregando clientes…</Card>}
+        {clients && (
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: cols,
-              gap: 12,
-              padding: '14px 20px',
-              borderBottom: '2px solid var(--fen-border)',
-              font: '700 10px/1 var(--fen-font)',
-              letterSpacing: '.08em',
-              textTransform: 'uppercase',
-              color: 'var(--fen-muted)',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(248px, 1fr))',
+              gap: 14,
             }}
           >
-            <span>Cliente</span>
-            <span>Plano</span>
-            <span>Status</span>
-            <span>Posts/mês</span>
-            <span />
+            {clients.map((c) => {
+              const fenice = c.agencia === 'Fenice Lab';
+              const ig = c.instagram?.username
+                ? '@' + c.instagram.username.replace(/^@/, '')
+                : c.slug;
+              return (
+                <Card key={c.slug}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <strong style={{ font: '600 15px/1.2 var(--fen-font)' }}>{c.name}</strong>
+                    {badge(
+                      fenice ? 'rgba(178,58,46,.14)' : 'rgba(154,140,122,.18)',
+                      fenice ? '#B23A2E' : '#6E5A48',
+                      c.agencia || '—',
+                    )}
+                  </div>
+                  <div style={{ font: '500 12px/1.4 var(--fen-font)', color: 'var(--fen-muted)', marginTop: 6 }}>
+                    {ig}
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    {c.validated
+                      ? badge('var(--fen-success-bg)', '#3c5232', 'Ativo')
+                      : badge('var(--fen-warning-bg)', '#7a4520', c.pending_status || 'Em setup')}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-          {CLIENTS.map((c, i) => (
-            <div
-              key={c.nome}
-              onClick={() => onCliente(c)}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: cols,
-                gap: 12,
-                padding: '14px 20px',
-                borderBottom: i < CLIENTS.length - 1 ? '1px solid var(--fen-border)' : 'none',
-                alignItems: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Avatar letter={c.letter} />
-                <div>
-                  <div style={{ font: '600 14px/1.2 var(--fen-font)' }}>{c.nome}</div>
-                  <div style={{ font: '500 12px/1 var(--fen-font)', color: 'var(--fen-muted)', marginTop: 3 }}>{c.seg}</div>
-                </div>
-                {c.pend > 0 && <Tag tone="terra">{c.pend} pend.</Tag>}
-              </div>
-              <span style={{ font: '500 13px/1 var(--fen-font)' }}>{c.plano}</span>
-              <span>
-                <span
-                  className="fen-badge"
-                  style={{ background: c.status[1], color: c.status[2] }}
-                >
-                  {c.status[0]}
-                </span>
-              </span>
-              <span style={{ font: '600 14px/1 var(--fen-mono)' }}>{c.posts}</span>
-              <div style={{ color: 'var(--fen-muted)' }}>
-                <PnIcon name="chevR" size={18} />
-              </div>
-            </div>
-          ))}
-        </Card>
+        )}
       </Scroll>
     </>
   );
