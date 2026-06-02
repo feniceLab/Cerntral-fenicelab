@@ -10,5 +10,8 @@
     "dev:painel": "pnpm --filter @fenice/painel dev",
     "dev:trafego": "pnpm --filter @fenice/trafego dev",
     "build": "pnpm -r build"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.2"
   }
 }

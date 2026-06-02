@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
+  base: '/portal/',
   plugins: [react()],
   resolve: {
     alias: {

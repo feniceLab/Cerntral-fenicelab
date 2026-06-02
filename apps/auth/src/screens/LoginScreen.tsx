@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Field } from '@fenice/shared';
+import { Button, Field, signIn, meuPapel } from '@fenice/shared';
 import { RoleToggle } from '../components/RoleToggle';
 import { PasswordField } from '../components/PasswordField';
 import { ROLE_PROFILES, INITIAL_PASSWORD, type Role } from '../mock';
@@ -7,14 +7,29 @@ import { ROLE_PROFILES, INITIAL_PASSWORD, type Role } from '../mock';
 interface LoginScreenProps {
   role: Role;
   onRoleChange: (role: Role) => void;
-  onSubmit: () => void;
 }
 
-/** Etapa 1 — login com alternância cliente/agência. */
-export function LoginScreen({ role, onRoleChange, onSubmit }: LoginScreenProps) {
+/** Etapa 1 — login real (Supabase) com alternância cliente/agência. */
+export function LoginScreen({ role, onRoleChange }: LoginScreenProps) {
   const profile = ROLE_PROFILES[role];
   const [email, setEmail] = useState(profile.email);
   const [senha, setSenha] = useState(INITIAL_PASSWORD);
+  const [erro, setErro] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
+
+  async function handleEntrar() {
+    setErro(null);
+    setCarregando(true);
+    try {
+      await signIn(email.trim(), senha);
+      const papel = await meuPapel();
+      window.location.assign(papel === 'cliente' ? '/portal/' : '/painel/');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErro(msg.includes('Invalid login') ? 'E-mail ou senha incorretos.' : msg);
+      setCarregando(false);
+    }
+  }
 
   // ao trocar de papel, reflete o e-mail-exemplo do papel selecionado
   const handleRole = (next: Role) => {
@@ -51,8 +66,14 @@ export function LoginScreen({ role, onRoleChange, onSubmit }: LoginScreenProps) 
         </button>
       </div>
 
-      <Button variant="primary" size="lg" className="fen-auth-submit" onClick={onSubmit}>
-        Entrar →
+      {erro && (
+        <div className="fen-auth-err" role="alert" style={{ color: '#B23A2E', fontSize: 13, margin: '0 0 10px' }}>
+          {erro}
+        </div>
+      )}
+
+      <Button variant="primary" size="lg" className="fen-auth-submit" disabled={carregando} onClick={handleEntrar}>
+        {carregando ? 'Entrando…' : 'Entrar →'}
       </Button>
 
       <div className="fen-auth-foot">

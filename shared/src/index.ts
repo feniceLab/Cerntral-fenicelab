@@ -38,3 +38,5 @@ export type { ApprovalCardProps } from './components/ApprovalCard';
 
 // Tokens da marca (objeto JSON) — disponivel para uso programatico.
 export { default as tokens } from './tokens.json';
+
+export * from './lib/supabase';
