@@ -13,6 +13,11 @@ concurrency:
 
 env:
   SITE: /etc/icontainer/apps/openresty/openresty/www/sites/central.fenicelab.com.br
+  # Supabase (cliente) — valores PÚBLICOS: a URL e a anon key são embutidas no bundle
+  # entregue a todo visitante (protegidas por RLS). Ficam aqui pra o build do CI não cair
+  # no placeholder (vite lê process.env.VITE_* no build). Trocar p/ secrets se preferir.
+  VITE_SUPABASE_URL: https://dfwcselivuwtacsirnbo.supabase.co
+  VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmd2NzZWxpdnV3dGFjc2lybmJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNDI0MTQsImV4cCI6MjA5NTkxODQxNH0.UPgRB4sCTPuUpfneZGkRXBqzRt8V2iPqvjYp7tlKvVQ
 
 jobs:
   changes:
