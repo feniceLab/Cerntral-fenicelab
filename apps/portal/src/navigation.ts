@@ -9,11 +9,8 @@ export type PortalTab = 'inicio' | 'calendario' | 'galeria' | 'relatorios';
 /** Todas as rotas da superficie Portal (abas + telas modais). */
 export type PortalRoute = PortalTab | 'sugestoes' | 'aprovacao' | 'brand';
 
-/** Telas da aba Trafego Pago. */
-export type TrafegoRoute = 'dash' | 'detalhe' | 'relatorio';
-
-/** Superficie ativa do app. */
-export type Surface = 'portal' | 'trafego';
+/** Superficie ativa do app: Portal do Cliente ou Performance (relatório de tráfego). */
+export type Surface = 'portal' | 'performance';
 
 /** Abas que renderizam a bottom-nav (telas "raiz" do Portal). */
 export const PORTAL_TABS: PortalTab[] = ['inicio', 'calendario', 'galeria', 'relatorios'];

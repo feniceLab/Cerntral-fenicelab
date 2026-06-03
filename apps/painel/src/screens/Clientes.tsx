@@ -22,8 +22,12 @@ function badge(bg: string, color: string, label: string) {
   );
 }
 
-export function Clientes() {
-  // status ao vivo por slug (vindo da API). null = ainda não carregou / indisponível.
+export interface ClientesProps {
+  /** abre o portal do cliente EMBUTIDO na central (sem nova guia). */
+  onOpen: (c: ClienteFenice) => void;
+}
+
+export function Clientes({ onOpen }: ClientesProps) {
   const [live, setLive] = useState<Record<string, ApiCliente> | null>(null);
 
   useEffect(() => {
@@ -34,20 +38,14 @@ export function Clientes() {
         for (const c of (d.clients ?? []) as ApiCliente[]) map[c.slug] = c;
         setLive(map);
       })
-      .catch(() => setLive({})); // sem API: cai no status estático do módulo
+      .catch(() => setLive({}));
   }, []);
 
   const total = CLIENTES_FENICE.length;
-
   const isAtivo = (c: ClienteFenice): boolean => {
     const l = live?.[c.slug];
     if (l && typeof l.validated === 'boolean') return l.validated;
     return c.status === 'ativo';
-  };
-
-  // cada cliente leva pro PORTAL próprio dele (subdomínio white-label).
-  const abrirPortal = (c: ClienteFenice) => {
-    if (c.portalUrl) window.open(c.portalUrl, '_blank', 'noopener');
   };
 
   return (
@@ -64,35 +62,24 @@ export function Clientes() {
           {CLIENTES_FENICE.map((c) => {
             const igUser = live?.[c.slug]?.instagram?.username ?? c.ig;
             const ig = igUser ? '@' + igUser.replace(/^@/, '') : c.slug;
-            const dominio = c.portalUrl ? c.portalUrl.replace(/^https?:\/\//, '') : null;
             const ativo = isAtivo(c);
-            const temPortal = Boolean(c.portalUrl);
             return (
-              <Card
-                key={c.slug}
-                onClick={temPortal ? () => abrirPortal(c) : undefined}
-                style={temPortal ? { cursor: 'pointer' } : undefined}
-              >
+              <Card key={c.slug} onClick={() => onOpen(c)} style={{ cursor: 'pointer' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                    <span
-                      aria-hidden
-                      style={{ width: 9, height: 9, borderRadius: 99, flex: '0 0 auto', background: c.cor }}
-                    />
+                    <span aria-hidden style={{ width: 9, height: 9, borderRadius: 99, flex: '0 0 auto', background: c.cor }} />
                     <strong style={{ font: '600 15px/1.2 var(--fen-font)' }}>{c.nome}</strong>
                   </span>
                   {badge('rgba(178,58,46,.14)', '#B23A2E', c.agencia)}
                 </div>
                 <div style={{ font: '500 12px/1.4 var(--fen-font)', color: 'var(--fen-muted)', marginTop: 6 }}>
-                  {dominio ?? ig}
+                  {ig}
                 </div>
                 <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   {ativo
                     ? badge('var(--fen-success-bg)', '#3c5232', 'Ativo')
                     : badge('var(--fen-warning-bg)', '#7a4520', c.statusLabel)}
-                  <span style={{ font: '600 12px/1 var(--fen-font)', color: temPortal ? c.cor : 'var(--fen-muted)' }}>
-                    {temPortal ? 'abrir portal →' : 'portal em breve'}
-                  </span>
+                  <span style={{ font: '600 12px/1 var(--fen-font)', color: c.cor }}>abrir portal →</span>
                 </div>
               </Card>
             );

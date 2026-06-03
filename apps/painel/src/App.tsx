@@ -1,45 +1,30 @@
 import { useState } from 'react';
-import { type ClienteFenice, clienteBySlug } from '@fenice/shared';
+import { type ClienteFenice } from '@fenice/shared';
 import { Sidebar, type NavKey } from './components/Sidebar';
 import { Dashboard } from './screens/Dashboard';
 import { Clientes } from './screens/Clientes';
 import { Relatorios } from './screens/Relatorios';
-import { RelatorioView } from './screens/RelatorioView';
+import { PortalEmbed } from './screens/PortalEmbed';
 import './styles.css';
 
 const VIEWS: NavKey[] = ['dashboard', 'clientes', 'relatorios'];
-
-interface Rota { view: NavKey; relatorio: ClienteFenice | null }
-const rotaFromHash = (): Rota => {
+const viewFromHash = (): NavKey => {
   const h = window.location.hash.replace(/^#/, '');
-  const [seg, slug] = h.split('/');
-  const view = (VIEWS as string[]).includes(seg) ? (seg as NavKey) : 'dashboard';
-  const relatorio = view === 'relatorios' && slug ? clienteBySlug(slug) ?? null : null;
-  return { view, relatorio };
+  return (VIEWS as string[]).includes(h) ? (h as NavKey) : 'dashboard';
 };
 
-/** Painel da agência: Dashboard (visão geral), Clientes (cada um leva ao seu
- *  portal próprio) e Relatórios (relatório de performance React por cliente).
- *  Deep-link por hash: #clientes · #relatorios · #relatorios/<slug>. */
+/** Painel da agência:
+ *  - Dashboard: visão geral da operação Fenice
+ *  - Clientes: cada card abre o PORTAL do cliente embutido (sem nova guia)
+ *  - Relatórios: consolidado da EMPRESA (o detalhe por cliente vive no portal → Performance) */
 export function App() {
-  const inicial = rotaFromHash();
-  const [view, setView] = useState<NavKey>(inicial.view);
-  const [relatorio, setRelatorio] = useState<ClienteFenice | null>(inicial.relatorio);
+  const [view, setView] = useState<NavKey>(viewFromHash);
+  const [portalCliente, setPortalCliente] = useState<ClienteFenice | null>(null);
 
   const go = (key: NavKey) => {
-    setRelatorio(null);
+    setPortalCliente(null);
     setView(key);
     window.location.hash = key;
-  };
-
-  const abrirRelatorio = (c: ClienteFenice) => {
-    setRelatorio(c);
-    window.location.hash = `relatorios/${c.slug}`;
-  };
-
-  const voltarRelatorios = () => {
-    setRelatorio(null);
-    window.location.hash = 'relatorios';
   };
 
   return (
@@ -47,12 +32,12 @@ export function App() {
       <div className="fen-pn-frame">
         <Sidebar view={view} go={go} />
         <div className="fen-pn-main">
-          {view === 'relatorios' && relatorio ? (
-            <RelatorioView cliente={relatorio} onBack={voltarRelatorios} />
-          ) : view === 'relatorios' ? (
-            <Relatorios onOpen={abrirRelatorio} />
+          {portalCliente ? (
+            <PortalEmbed cliente={portalCliente} onBack={() => setPortalCliente(null)} />
           ) : view === 'clientes' ? (
-            <Clientes />
+            <Clientes onOpen={setPortalCliente} />
+          ) : view === 'relatorios' ? (
+            <Relatorios />
           ) : (
             <Dashboard />
           )}
