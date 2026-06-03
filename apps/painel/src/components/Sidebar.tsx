@@ -2,7 +2,7 @@ import { Avatar } from '@fenice/shared';
 import { PnIcon, type PnIconName } from './PnIcon';
 import { SELO_TERRA } from '../assets';
 
-export type NavKey = 'dashboard' | 'clientes' | 'relatorios';
+export type NavKey = 'clientes' | 'dashboard' | 'reposicoes' | 'relatorios';
 
 interface NavItem {
   key: NavKey;
@@ -11,10 +11,24 @@ interface NavItem {
   badge?: number;
 }
 
-const ITEMS: NavItem[] = [
-  { key: 'dashboard', icon: 'grid', label: 'Dashboard' },
-  { key: 'clientes', icon: 'users', label: 'Clientes' },
-  { key: 'relatorios', icon: 'file', label: 'Relatórios' },
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const GROUPS: NavGroup[] = [
+  {
+    label: 'Operação',
+    items: [{ key: 'clientes', icon: 'users', label: 'Clientes' }],
+  },
+  {
+    label: 'Tráfego Pago',
+    items: [
+      { key: 'dashboard', icon: 'grid', label: 'Dashboard' },
+      { key: 'reposicoes', icon: 'refresh', label: 'Reposições' },
+      { key: 'relatorios', icon: 'file', label: 'Relatórios' },
+    ],
+  },
 ];
 
 export interface SidebarProps {
@@ -35,29 +49,33 @@ export function Sidebar({ view, go }: SidebarProps) {
         </div>
       </div>
 
-      <div className="fen-pn-side__group">Operação</div>
-      <div className="fen-pn-side__nav">
-        {ITEMS.map((item) => {
-          const on = view === item.key;
-          return (
-            <button
-              key={item.key}
-              type="button"
-              className={`fen-pn-side__item${on ? ' is-on' : ''}`}
-              onClick={() => go(item.key)}
-            >
-              <PnIcon
-                name={item.icon}
-                size={19}
-                sw={on ? 2.1 : 1.8}
-                color={on ? 'var(--fen-cotta)' : '#bcae9d'}
-              />
-              <span>{item.label}</span>
-              {item.badge ? <span className="fen-pn-side__badge">{item.badge}</span> : null}
-            </button>
-          );
-        })}
-      </div>
+      {GROUPS.map((group) => (
+        <div key={group.label}>
+          <div className="fen-pn-side__group">{group.label}</div>
+          <div className="fen-pn-side__nav">
+            {group.items.map((item) => {
+              const on = view === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  className={`fen-pn-side__item${on ? ' is-on' : ''}`}
+                  onClick={() => go(item.key)}
+                >
+                  <PnIcon
+                    name={item.icon}
+                    size={19}
+                    sw={on ? 2.1 : 1.8}
+                    color={on ? 'var(--fen-cotta)' : '#bcae9d'}
+                  />
+                  <span>{item.label}</span>
+                  {item.badge ? <span className="fen-pn-side__badge">{item.badge}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
 
       <div className="fen-pn-side__foot">
         <Avatar letter="D" size={34} />
