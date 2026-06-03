@@ -59,7 +59,7 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     statusLabel: 'Ativo',
     cor: '#B23A2E',
     relatorioPronto: true,
-    portalUrl: 'https://suprema.fenicelab.com.br',
+    portalUrl: 'https://supremapizza.fenicelab.com.br',
   },
   {
     slug: 'arena',
