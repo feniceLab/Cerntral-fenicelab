@@ -53,3 +53,4 @@ export {
 export type { ClienteFenice, ClienteStatus } from './clientes/fenice';
 export { CLIENTE_THEMES, themeBySlug, themeFromCor } from './clientes/themes';
 export type { ClienteTheme } from './clientes/themes';
+// ci: re-trigger deploy (rebuild esbuild + steps build/rsync separados)

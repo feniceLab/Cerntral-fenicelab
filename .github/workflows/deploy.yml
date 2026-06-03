@@ -54,8 +54,12 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      # strictDepBuilds=false: não falha por build script ignorado (esbuild funciona via pacote de plataforma no Linux)
+      # strictDepBuilds=false: install não falha por build script ignorado
       - run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
+      # garante o binário nativo do esbuild (o build script é pulado no install acima);
+      # sem isso o `vite build` quebra no runner Linux com "esbuild binary not found".
+      - name: rebuild esbuild
+        run: pnpm rebuild esbuild
 
       - name: SSH setup
         run: |
@@ -67,26 +71,33 @@ jobs:
         id: v
         run: echo "ssh=ssh -i ~/.ssh/deploy -p ${{ secrets.SSH_PORT }}" >> "$GITHUB_OUTPUT"
 
-      - name: deploy auth (raiz)
+      # ── build e rsync SEPARADOS por app (steps distintos = a API mostra qual falha) ──
+      - name: build auth
         if: ${{ needs.changes.outputs.auth == 'true' }}
+        run: pnpm --filter @fenice/auth build
+      - name: rsync auth (raiz)
+        if: ${{ needs.changes.outputs.auth == 'true' }}
+        # raiz: NÃO usar --delete (preserva painel/ portal/ ssl/ favicons)
         run: |
-          pnpm --filter @fenice/auth build
-          # raiz: NÃO usar --delete (preserva painel/ portal/ ssl/ favicons)
           rsync -az -e "${{ steps.v.outputs.ssh }}" apps/auth/dist/ \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$SITE/"
 
-      - name: deploy painel
+      - name: build painel
+        if: ${{ needs.changes.outputs.painel == 'true' }}
+        run: pnpm --filter @fenice/painel build
+      - name: rsync painel
         if: ${{ needs.changes.outputs.painel == 'true' }}
         run: |
-          pnpm --filter @fenice/painel build
           ${{ steps.v.outputs.ssh }} "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p $SITE/painel"
           rsync -az --delete -e "${{ steps.v.outputs.ssh }}" apps/painel/dist/ \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$SITE/painel/"
 
-      - name: deploy portal
+      - name: build portal
+        if: ${{ needs.changes.outputs.portal == 'true' }}
+        run: pnpm --filter @fenice/portal build
+      - name: rsync portal
         if: ${{ needs.changes.outputs.portal == 'true' }}
         run: |
-          pnpm --filter @fenice/portal build
           ${{ steps.v.outputs.ssh }} "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p $SITE/portal"
           rsync -az --delete -e "${{ steps.v.outputs.ssh }}" apps/portal/dist/ \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$SITE/portal/"
