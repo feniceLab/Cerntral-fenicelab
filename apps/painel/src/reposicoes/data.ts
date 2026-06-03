@@ -10,7 +10,8 @@ import { CLIENTES_FENICE } from '@fenice/shared';
 export const MES = 'Junho 2026';
 
 // ---------- SALDO (tempo real via /api/saldo) ----------
-export type NivelSaldo = 'critico' | 'baixo' | 'ok' | 'sincronizar';
+// cartao = cobra no cartão (sem "saldo baixo"); cap = disponível = cap − gasto.
+export type NivelSaldo = 'critico' | 'baixo' | 'ok' | 'cartao' | 'sincronizar';
 
 const TRAFEGO = (import.meta as any).env?.VITE_TRAFEGO_URL || 'https://relatorios.fenicelab.com.br';
 
@@ -24,40 +25,63 @@ export interface SaldoLive {
 }
 export interface Saldo {
   slug: string; nome: string; cor: string;
-  saldo: number | null; gastoDiaMedio: number | null;
+  funding: 'cartao' | 'cap' | 'prepago' | null;
+  /** disponível em R$ (cap − gasto) p/ contas com limite; null p/ cartão. */
+  disponivel: number | null;
+  /** valor acumulado a faturar no cartão (balance) — só p/ funding cartao. */
+  noCartao: number | null;
+  gastoDiaMedio: number | null;
   diasCobertura: number | null; nivel: NivelSaldo; obs?: string;
 }
 
 const meta = (slug: string) => CLIENTES_FENICE.find((c) => c.slug === slug);
 
-/** Busca o saldo ao vivo do serviço de tráfego (me/adaccounts.balance). */
+/** Busca o saldo ao vivo do serviço de tráfego (me/adaccounts). */
 export async function fetchSaldosLive(): Promise<SaldoLive[]> {
   const r = await fetch(`${TRAFEGO}/api/saldo`);
   const d = await r.json();
   return (d.clients ?? []) as SaldoLive[];
 }
 
-// Alerta de saldo baixo: 🔴 < 3 dias de cobertura · 🟡 < 7 dias · 🟢 ≥ 7.
-function nivelSaldo(saldo: number | null, gastoDia: number | null): { nivel: NivelSaldo; dias: number | null } {
-  if (saldo == null || gastoDia == null || gastoDia <= 0) return { nivel: 'sincronizar', dias: null };
-  const dias = saldo / gastoDia;
-  return { nivel: dias < 3 ? 'critico' : dias < 7 ? 'baixo' : 'ok', dias };
-}
+const cents = (c: number | null | undefined) => (c != null ? c / 100 : null);
 
-/** Monta os cards de saldo a partir da resposta ao vivo (ou vazio = sincronizar). */
+/** Monta os cards de saldo: cartão = sem alerta; cap = disponível (cap−gasto) + cobertura. */
 export function buildSaldos(live: SaldoLive[]): Saldo[] {
   const bySlug: Record<string, SaldoLive> = {};
   for (const l of live) bySlug[l.slug] = l;
-  // ordem: clientes Fenice com conta de anúncios
   const slugs = ['suprema', 'arena', 'oca'];
   return slugs.map((slug) => {
     const m = meta(slug);
     const l = bySlug[slug];
-    const saldo = l?.balance_cents != null ? l.balance_cents / 100 : null;
-    const gastoDia = GASTO_DIA[slug] ?? null;
-    const { nivel, dias } = nivelSaldo(saldo, gastoDia);
-    const obs = saldo == null ? (slug === 'arena' ? 'Conta bloqueada no MCP — saldo via serviço.' : 'Aguardando saldo do serviço.') : undefined;
-    return { slug, nome: m?.nome ?? slug, cor: m?.cor ?? '#9a8c7a', saldo, gastoDiaMedio: gastoDia, diasCobertura: dias, nivel, obs };
+    const base = { slug, nome: m?.nome ?? slug, cor: m?.cor ?? '#9a8c7a', gastoDiaMedio: GASTO_DIA[slug] ?? null };
+
+    if (!l || !l.found) {
+      return { ...base, funding: m?.funding ?? null, disponivel: null, noCartao: null, diasCobertura: null, nivel: 'sincronizar' as NivelSaldo, obs: 'Aguardando saldo do serviço.' };
+    }
+
+    const cap = l.spend_cap_cents ?? 0;
+    // funding: explícito no cadastro; senão deriva (cap>0 → cap, cap=0 → cartão)
+    const funding = m?.funding ?? (cap > 0 ? 'cap' : 'cartao');
+
+    if (funding === 'cartao') {
+      return { ...base, funding, disponivel: null, noCartao: cents(l.balance_cents), diasCobertura: null, nivel: 'cartao' as NivelSaldo, obs: 'Cobra no cartão — sem saldo a zerar.' };
+    }
+
+    // cap / prepago → disponível
+    const disponivel = funding === 'prepago'
+      ? cents(l.balance_cents)
+      : (cap > 0 ? (cap - (l.amount_spent_cents ?? 0)) / 100 : cents(l.balance_cents));
+    const gastoDia = base.gastoDiaMedio;
+    const dias = disponivel != null && gastoDia ? disponivel / gastoDia : null;
+    let nivel: NivelSaldo;
+    if (disponivel == null) nivel = 'sincronizar';
+    else if (disponivel <= 0.5 || (dias != null && dias < 3)) nivel = 'critico';
+    else if (dias != null && dias < 7) nivel = 'baixo';
+    else nivel = 'ok';
+    const obs = disponivel != null && disponivel <= 0.5
+      ? 'Limite atingido — repor.'
+      : (gastoDia ? undefined : 'Gasto/dia não estimado.');
+    return { ...base, funding, disponivel, noCartao: null, diasCobertura: dias, nivel, obs };
   });
 }
 

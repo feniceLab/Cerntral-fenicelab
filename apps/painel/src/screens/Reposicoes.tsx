@@ -7,9 +7,10 @@ const brl = (n: number) => 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDi
 const brl0 = (n: number) => 'R$ ' + n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 
 const SALDO_UI: Record<NivelSaldo, { dot: string; label: string; bg: string; fg: string }> = {
-  critico: { dot: '#B23A2E', label: 'Saldo crítico', bg: 'rgba(178,58,46,.14)', fg: '#B23A2E' },
-  baixo: { dot: '#C8742B', label: 'Saldo baixo', bg: 'var(--fen-warning-bg)', fg: '#7a4520' },
-  ok: { dot: '#3c8a3c', label: 'Saldo ok', bg: 'var(--fen-success-bg)', fg: '#3c5232' },
+  critico: { dot: '#B23A2E', label: 'Repor', bg: 'rgba(178,58,46,.14)', fg: '#B23A2E' },
+  baixo: { dot: '#C8742B', label: 'Atenção', bg: 'var(--fen-warning-bg)', fg: '#7a4520' },
+  ok: { dot: '#3c8a3c', label: 'Disponível ok', bg: 'var(--fen-success-bg)', fg: '#3c5232' },
+  cartao: { dot: '#3C6E8F', label: 'No cartão', bg: 'rgba(60,110,143,.14)', fg: '#3C6E8F' },
   sincronizar: { dot: '#9a8c7a', label: 'Sincronizar', bg: 'rgba(154,140,122,.18)', fg: '#6E5A48' },
 };
 const STATUS_UI: Record<StatusReposicao, [string, string, string]> = {
@@ -50,7 +51,7 @@ export function Reposicoes() {
               ⚠ {alertas.length} conta(s) com saldo baixo
             </div>
             <div style={{ marginTop: 4, font: '500 12px/1.4 var(--fen-font)', color: 'var(--fen-muted)' }}>
-              {alertas.map((a) => `${a.nome} (${a.diasCobertura?.toFixed(0)}d)`).join(' · ')} — repor antes de pausar veiculação.
+              {alertas.map((a) => `${a.nome} (${a.diasCobertura != null ? a.diasCobertura.toFixed(0) + 'd' : 'limite atingido'})`).join(' · ')} — repor antes de pausar veiculação.
             </div>
           </Card>
         )}
@@ -71,13 +72,20 @@ export function Reposicoes() {
                   </span>
                   <span aria-hidden title={ui.label} style={{ width: 10, height: 10, borderRadius: 99, background: ui.dot }} />
                 </div>
-                <div style={{ marginTop: 10, font: '700 22px/1 var(--fen-font)', color: s.saldo == null ? 'var(--fen-muted)' : 'var(--fen-ink, #2A211C)' }}>
-                  {s.saldo == null ? '— sincronizar' : brl(s.saldo)}
+                <div style={{ marginTop: 10, font: '600 10px/1 var(--fen-font)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--fen-muted)' }}>
+                  {s.funding === 'cartao' ? 'A faturar no cartão' : 'Disponível (limite − gasto)'}
+                </div>
+                <div style={{ marginTop: 3, font: '700 22px/1 var(--fen-font)', color: s.nivel === 'critico' ? '#B23A2E' : 'var(--fen-ink, #2A211C)' }}>
+                  {s.funding === 'cartao'
+                    ? (s.noCartao != null ? brl(s.noCartao) : '—')
+                    : (s.disponivel != null ? brl(s.disponivel) : '— sincronizar')}
                 </div>
                 <div style={{ marginTop: 6, font: '500 11px/1.4 var(--fen-font)', color: 'var(--fen-muted)' }}>
-                  {s.diasCobertura != null
-                    ? `~${s.diasCobertura.toFixed(0)} dias de cobertura · gasto ${brl0(s.gastoDiaMedio || 0)}/dia`
-                    : (s.obs || 'Aguardando saldo do serviço.')}
+                  {s.funding === 'cartao'
+                    ? (s.obs || 'Cobra no cartão.')
+                    : s.diasCobertura != null
+                      ? `~${s.diasCobertura.toFixed(0)} dias de cobertura · gasto ${brl0(s.gastoDiaMedio || 0)}/dia`
+                      : (s.obs || 'Aguardando saldo do serviço.')}
                 </div>
                 <div style={{ marginTop: 10 }}>
                   <span className="fen-badge" style={{ background: ui.bg, color: ui.fg }}>{ui.label}</span>

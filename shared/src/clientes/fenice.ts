@@ -36,6 +36,10 @@ export interface ClienteFenice {
   relatorioPronto: boolean;
   /** portal white-label do cliente (subdomínio próprio). null = ainda não existe. */
   portalUrl: string | null;
+  /** financiamento da conta de anúncios:
+   *  'cartao' = cobra no cartão (não há "saldo baixo"); 'cap' = limite de gasto (disponível = cap − gasto);
+   *  'prepago' = saldo pré-pago; null = sem conta / a definir. */
+  funding: 'cartao' | 'cap' | 'prepago' | null;
 }
 
 /** Caminho do relatório vertical do cliente, relativo à base do serviço de tráfego. */
@@ -60,6 +64,7 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     cor: '#B23A2E',
     relatorioPronto: true,
     portalUrl: 'https://supremapizza.fenicelab.com.br',
+    funding: 'cartao',
   },
   {
     slug: 'arena',
@@ -76,6 +81,7 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     cor: '#8C4A8F',
     relatorioPronto: true,
     portalUrl: 'https://arenagourmet.fenicelab.com.br',
+    funding: 'cap',
   },
   {
     slug: 'oca',
@@ -92,6 +98,7 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     cor: '#C8742B',
     relatorioPronto: false,
     portalUrl: null,
+    funding: 'cap',
   },
   {
     slug: 'cotafacil',
@@ -108,6 +115,7 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     cor: '#3C6E8F',
     relatorioPronto: false,
     portalUrl: null,
+    funding: null,
   },
   {
     slug: 'imperio',
@@ -124,6 +132,7 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     cor: '#A88121',
     relatorioPronto: false,
     portalUrl: null,
+    funding: null,
   },
 ];
 
