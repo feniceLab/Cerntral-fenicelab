@@ -23,8 +23,34 @@ import {
 const PARAMS = new URLSearchParams(window.location.search);
 const SLUG = PARAMS.get('c') || 'suprema';
 const SURFACE_INICIAL: Surface = PARAMS.get('surface') === 'performance' ? 'performance' : 'portal';
+// modo embed (?embed=1): renderiza só o relatório em tela cheia, sem o shell do portal
+// (sem DeviceFrame/switch/nav). Usado pelos brand books no iframe de Performance.
+const EMBED = PARAMS.get('embed') === '1';
 
 export function App() {
+  if (EMBED) return <EmbeddedReport />;
+  return <PortalApp />;
+}
+
+// Relatório standalone (full-bleed) pra embutir no brand book.
+function EmbeddedReport() {
+  const cliente = clienteBySlug(SLUG);
+  const report = REPORTS[SLUG];
+  const theme = themeBySlug(SLUG, cliente?.cor || '#B23A2E');
+  return (
+    <div style={{ position: 'fixed', inset: 0, overflow: 'auto' }}>
+      {report ? (
+        <Relatorio data={report} theme={theme} />
+      ) : (
+        <div style={{ padding: 24, color: '#6b5d4f', font: '500 14px/1.6 system-ui' }}>
+          Relatório de performance em breve.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PortalApp() {
   const [surface, setSurface] = useState<Surface>(SURFACE_INICIAL);
   const [portal, setPortal] = useState<PortalRoute>('inicio');
 
