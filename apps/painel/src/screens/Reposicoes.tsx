@@ -73,7 +73,7 @@ export function Reposicoes() {
                   <span aria-hidden title={ui.label} style={{ width: 10, height: 10, borderRadius: 99, background: ui.dot }} />
                 </div>
                 <div style={{ marginTop: 10, font: '600 10px/1 var(--fen-font)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--fen-muted)' }}>
-                  {s.funding === 'cartao' ? 'A faturar no cartão' : 'Disponível (limite − gasto)'}
+                  {s.funding === 'cartao' ? 'A faturar no cartão' : 'Saldo disponível (pré-pago)'}
                 </div>
                 <div style={{ marginTop: 3, font: '700 22px/1 var(--fen-font)', color: s.nivel === 'critico' ? '#B23A2E' : 'var(--fen-ink, #2A211C)' }}>
                   {s.funding === 'cartao'

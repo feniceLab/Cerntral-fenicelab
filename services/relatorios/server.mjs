@@ -578,7 +578,7 @@ async function fetchSaldos() {
   let erro = null;
   if (token) {
     try {
-      const r = await fetch(`https://graph.facebook.com/v23.0/me/adaccounts?fields=account_id,name,currency,account_status,balance,amount_spent,spend_cap&limit=500&access_token=${token}`);
+      const r = await fetch(`https://graph.facebook.com/v23.0/me/adaccounts?fields=account_id,name,currency,account_status,balance,amount_spent,spend_cap,funding_source,funding_source_details&limit=500&access_token=${token}`);
       const j = await r.json();
       if (j.error) erro = j.error.message || 'graph_error';
       else for (const a of (j.data || [])) byAcct[a.account_id] = a;
@@ -592,6 +592,15 @@ async function fetchSaldos() {
     .map((c) => {
       const a = byAcct[c.ad_account_id];
       const cents = (v) => (v != null && v !== '' ? parseInt(v) : null);
+      // tipo de financiamento + saldo disponível (parseado do display_string da Meta)
+      const fd = a?.funding_source_details || null;
+      const tipo = fd ? (fd.type === 1 ? 'cartao' : fd.type === 20 ? 'prepago' : 'outro') : null;
+      let disponivel_cents = null;
+      if (tipo === 'prepago' && fd?.display_string) {
+        // ex.: "Saldo disponível (R$25,22 BRL)" → 2522
+        const m = fd.display_string.match(/R\$\s*([\d.]*\d)(?:,(\d{2}))?/);
+        if (m) disponivel_cents = parseInt(m[1].replace(/\./g, ''), 10) * 100 + parseInt(m[2] || '00', 10);
+      }
       return {
         slug: c.slug,
         name: c.name,
@@ -602,6 +611,11 @@ async function fetchSaldos() {
         balance_cents: a ? cents(a.balance) : null,
         amount_spent_cents: a ? cents(a.amount_spent) : null,
         spend_cap_cents: a ? cents(a.spend_cap) : null,
+        funding_source: a?.funding_source ?? null,
+        funding_source_details: a?.funding_source_details ?? null,
+        funding_tipo: tipo,                                            // 'cartao' | 'prepago' | 'outro'
+        disponivel_cents: tipo === 'prepago' ? disponivel_cents : null, // saldo pré-pago disponível
+        a_faturar_cents: tipo === 'cartao' ? (a ? cents(a.balance) : null) : null, // valor a faturar no cartão
         found: !!a,
       };
     });

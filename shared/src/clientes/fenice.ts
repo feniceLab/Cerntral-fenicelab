@@ -81,7 +81,7 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     cor: '#8C4A8F',
     relatorioPronto: true,
     portalUrl: 'https://arenagourmet.fenicelab.com.br',
-    funding: 'cap',
+    funding: 'prepago',
   },
   {
     slug: 'oca',
@@ -98,7 +98,7 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     cor: '#C8742B',
     relatorioPronto: false,
     portalUrl: null,
-    funding: 'cap',
+    funding: 'prepago',
   },
   {
     slug: 'cotafacil',

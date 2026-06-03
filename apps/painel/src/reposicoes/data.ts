@@ -21,6 +21,9 @@ const GASTO_DIA: Record<string, number | null> = { suprema: 75.83, arena: 36.68,
 export interface SaldoLive {
   slug: string; name: string; ad_account_id: string;
   balance_cents: number | null; amount_spent_cents: number | null; spend_cap_cents: number | null;
+  funding_tipo: 'cartao' | 'prepago' | 'outro' | null;
+  disponivel_cents: number | null;   // saldo pré-pago disponível (Meta display_string)
+  a_faturar_cents: number | null;    // valor a faturar no cartão
   account_status: number | null; found: boolean; currency: string;
 }
 export interface Saldo {
@@ -45,7 +48,8 @@ export async function fetchSaldosLive(): Promise<SaldoLive[]> {
 
 const cents = (c: number | null | undefined) => (c != null ? c / 100 : null);
 
-/** Monta os cards de saldo: cartão = sem alerta; cap = disponível (cap−gasto) + cobertura. */
+/** Monta os cards de saldo a partir do serviço (autoritativo):
+ *  cartão → "a faturar" (sem alerta); pré-pago → saldo disponível real + cobertura/alerta. */
 export function buildSaldos(live: SaldoLive[]): Saldo[] {
   const bySlug: Record<string, SaldoLive> = {};
   for (const l of live) bySlug[l.slug] = l;
@@ -59,18 +63,15 @@ export function buildSaldos(live: SaldoLive[]): Saldo[] {
       return { ...base, funding: m?.funding ?? null, disponivel: null, noCartao: null, diasCobertura: null, nivel: 'sincronizar' as NivelSaldo, obs: 'Aguardando saldo do serviço.' };
     }
 
-    const cap = l.spend_cap_cents ?? 0;
-    // funding: explícito no cadastro; senão deriva (cap>0 → cap, cap=0 → cartão)
-    const funding = m?.funding ?? (cap > 0 ? 'cap' : 'cartao');
+    // tipo do serviço (autoritativo); fallback no cadastro
+    const funding = (l.funding_tipo as Saldo['funding']) ?? m?.funding ?? null;
 
     if (funding === 'cartao') {
-      return { ...base, funding, disponivel: null, noCartao: cents(l.balance_cents), diasCobertura: null, nivel: 'cartao' as NivelSaldo, obs: 'Cobra no cartão — sem saldo a zerar.' };
+      return { ...base, funding, disponivel: null, noCartao: cents(l.a_faturar_cents) ?? cents(l.balance_cents), diasCobertura: null, nivel: 'cartao' as NivelSaldo, obs: 'Cobra no cartão — sem saldo a zerar.' };
     }
 
-    // cap / prepago → disponível
-    const disponivel = funding === 'prepago'
-      ? cents(l.balance_cents)
-      : (cap > 0 ? (cap - (l.amount_spent_cents ?? 0)) / 100 : cents(l.balance_cents));
+    // pré-pago → saldo disponível real (Meta) + cobertura
+    const disponivel = cents(l.disponivel_cents);
     const gastoDia = base.gastoDiaMedio;
     const dias = disponivel != null && gastoDia ? disponivel / gastoDia : null;
     let nivel: NivelSaldo;
@@ -79,7 +80,7 @@ export function buildSaldos(live: SaldoLive[]): Saldo[] {
     else if (dias != null && dias < 7) nivel = 'baixo';
     else nivel = 'ok';
     const obs = disponivel != null && disponivel <= 0.5
-      ? 'Limite atingido — repor.'
+      ? 'Saldo zerado — repor via PIX.'
       : (gastoDia ? undefined : 'Gasto/dia não estimado.');
     return { ...base, funding, disponivel, noCartao: null, diasCobertura: dias, nivel, obs };
   });
