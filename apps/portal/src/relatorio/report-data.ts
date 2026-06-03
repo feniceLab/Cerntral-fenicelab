@@ -52,8 +52,18 @@ export interface RepOperacao {
   title: string;
   desc?: string;
   total: { pedidos: string; faturamento: string; ticket: string; novos: string };
+  /** proporção do faturamento por canal (barra empilhada). */
+  proporcao?: { label: string; pct: number; tom?: 'site' | 'manual' | 'ifood' }[];
   canais: RepOpCanal[];
   note?: string;
+}
+// ── Funil do cardápio digital (Site): visitas → pedido ──
+export interface RepSiteStage { label: string; value: string; pct: string; pctNum: number; final?: boolean }
+export interface RepSiteFunnel {
+  title: string;
+  desc?: string;
+  stages: RepSiteStage[];
+  foot: { text: string; value: string; accent?: boolean }[];
 }
 export interface RelatorioData {
   slug: string;
@@ -72,6 +82,10 @@ export interface RelatorioData {
   sections: RepSection[];
   /** Operação da loja por canal (Site/Manual/iFood) — incremento opcional. */
   operacao?: RepOperacao;
+  /** Funil de conversão do cardápio digital (Site) — opcional. */
+  siteFunnel?: RepSiteFunnel;
+  /** Comparativo da mídia paga vs mês anterior (linha de ▲▼) — opcional. */
+  midiaVsAnterior?: { text: string; value: string; tone?: 'up' | 'down' }[];
   footer: { tagline: string; period: string };
 }
 
@@ -360,6 +374,11 @@ const arena: RelatorioData = {
     title: 'Operação da Loja · por canal',
     desc: 'Panorama completo da loja em Maio (todos os canais — não só o que a mídia paga atribuiu). Mostra o peso do canal próprio digital (Site) vs iFood vs balcão/PDV.',
     total: { pedidos: '1.403', faturamento: 'R$ 139.906', ticket: 'R$ 99,72', novos: '211' },
+    proporcao: [
+      { label: 'Balcão/PDV', pct: 52.3, tom: 'manual' },
+      { label: 'Site', pct: 25.7, tom: 'site' },
+      { label: 'iFood', pct: 22.0, tom: 'ifood' },
+    ],
     canais: [
       {
         nome: 'Site · cardápio próprio', tom: 'site',
@@ -390,6 +409,29 @@ const arena: RelatorioData = {
     ],
     note: 'Canal próprio (Site) rende mais que o iFood, com ticket maior e sem comissão de marketplace — é o canal mais rentável e o destino natural da mídia paga. *iFood: divisão por pedido em reconfirmação (faturamento confere; contagem de pedidos diverge da soma das modalidades).',
   },
+  siteFunnel: {
+    title: 'Funil do Cardápio Digital · Site',
+    desc: 'Conversão do cardápio digital próprio em Maio — da visita até o pedido concluído.',
+    stages: [
+      { label: 'Visitas', value: '2.026', pct: '100%', pctNum: 100 },
+      { label: 'Visualizações', value: '877', pct: '43,29%', pctNum: 43.29 },
+      { label: 'Sacola', value: '568', pct: '28,04%', pctNum: 28.04 },
+      { label: 'Revisão', value: '489', pct: '24,14%', pctNum: 24.14 },
+      { label: 'Concluídos', value: '394', pct: '19,45%', pctNum: 19.45, final: true },
+    ],
+    foot: [
+      { text: 'Conversão (visita → pedido)', value: '19,45%', accent: true },
+      { text: 'Sacola → Pedido', value: '69,4%' },
+      { text: 'Melhor semana (01–03/05)', value: '26,8%' },
+    ],
+  },
+  midiaVsAnterior: [
+    { text: 'Investido', value: '▲ 84,9%', tone: 'up' },
+    { text: 'Vendas', value: '▲ 75%', tone: 'up' },
+    { text: 'Faturamento', value: '▲ 57,7%', tone: 'up' },
+    { text: 'ROAS', value: '▼ 14,8%', tone: 'down' },
+    { text: 'Frequência', value: '5,31 → 2,37', tone: 'up' },
+  ],
   footer: FENICE_FOOTER,
 };
 

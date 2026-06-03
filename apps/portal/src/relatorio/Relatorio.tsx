@@ -83,6 +83,105 @@ export function Relatorio({ data, theme }: RelatorioProps) {
           </div>
         )}
 
+        {/* OPERAÇÃO DA LOJA · POR CANAL */}
+        {data.operacao && (
+          <section className="rep-section">
+            <h2 className="rep-section-title">{data.operacao.title}</h2>
+            {data.operacao.desc && <p className="rep-section-desc">{data.operacao.desc}</p>}
+            <div className="rep-op-total">
+              {[
+                { label: 'Pedidos', value: data.operacao.total.pedidos },
+                { label: 'Faturamento', value: data.operacao.total.faturamento, accent: true },
+                { label: 'Ticket Médio', value: data.operacao.total.ticket },
+                { label: 'Novos Clientes', value: data.operacao.total.novos },
+              ].map((k) => (
+                <div className="rep-op-total-item" key={k.label}>
+                  <div className="rep-op-total-label">{k.label}</div>
+                  <div className={`rep-op-total-value mono${k.accent ? ' accent' : ''}`}>{k.value}</div>
+                </div>
+              ))}
+            </div>
+            {data.operacao.proporcao && (
+              <div className="rep-op-prop">
+                <div className="rep-op-prop-bar">
+                  {data.operacao.proporcao.map((p) => (
+                    <span
+                      key={p.label}
+                      className={`rep-op-prop-seg${p.tom ? ' ' + p.tom : ''}`}
+                      style={{ width: `${p.pct}%` }}
+                      title={`${p.label} ${p.pct}%`}
+                    />
+                  ))}
+                </div>
+                <div className="rep-op-prop-legend">
+                  {data.operacao.proporcao.map((p) => (
+                    <span className="rep-op-prop-leg" key={p.label}>
+                      <i className={`rep-op-prop-dot${p.tom ? ' ' + p.tom : ''}`} />
+                      {p.label} <b className="mono">{String(p.pct).replace('.', ',')}%</b>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="rep-op-grid">
+              {data.operacao.canais.map((canal) => (
+                <div className={`rep-op-card${canal.tom ? ' ' + canal.tom : ''}`} key={canal.nome}>
+                  <div className="rep-op-card-head">
+                    <span className="rep-op-card-name">{canal.nome}</span>
+                    <span className="rep-op-card-fat mono">{canal.faturamento}</span>
+                  </div>
+                  <div className="rep-op-card-sub">
+                    {canal.pedidos} pedidos · ticket {canal.ticket} · {canal.novos} novos
+                  </div>
+                  <div className="rep-op-modais">
+                    {canal.modalidades.map((m) => (
+                      <div className="rep-op-modal" key={m.label}>
+                        <span className="rep-op-modal-label">{m.label}</span>
+                        <span className="rep-op-modal-track">
+                          <span className="rep-op-modal-fill" style={{ width: `${m.pct}%` }} />
+                        </span>
+                        <span className="rep-op-modal-val mono">{m.pedidos} · {m.valor}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {data.operacao.note && <p className="rep-note">{data.operacao.note}</p>}
+          </section>
+        )}
+
+        {/* FUNIL DO CARDÁPIO DIGITAL · SITE */}
+        {data.siteFunnel && (
+          <section className="rep-section">
+            <h2 className="rep-section-title">{data.siteFunnel.title}</h2>
+            {data.siteFunnel.desc && <p className="rep-section-desc">{data.siteFunnel.desc}</p>}
+            <div className="rep-sfun">
+              {data.siteFunnel.stages.map((s) => (
+                <div className={`rep-sfun-step${s.final ? ' final' : ''}`} key={s.label}>
+                  <div className="rep-sfun-label">{s.label}</div>
+                  <div className="rep-sfun-value mono">{s.value}</div>
+                  <div className="rep-sfun-track">
+                    <span className="rep-sfun-fill" style={{ width: `${s.pctNum}%` }} />
+                  </div>
+                  <div className="rep-sfun-pct mono">{s.pct}</div>
+                </div>
+              ))}
+            </div>
+            <div className="rep-funnel-foot">
+              {data.siteFunnel.foot.map((f, i) => (
+                <span key={i}>
+                  {i > 0 && <>&nbsp;·&nbsp;</>}
+                  {f.text}: <b className={f.accent ? 'accent' : undefined}>{f.value}</b>
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* MÍDIA PAGA */}
+        <h2 className="rep-section-title" style={{ marginTop: 30 }}>Mídia Paga · Valor de Conversão</h2>
+
         {/* HERO */}
         <div className="rep-hero">
           <div className="rep-hero-kicker">{data.hero.kicker}</div>
@@ -117,9 +216,20 @@ export function Relatorio({ data, theme }: RelatorioProps) {
           ))}
         </div>
 
-        {/* FUNIL */}
+        {data.midiaVsAnterior && (
+          <div className="rep-vsprev">
+            <span className="rep-vsprev-label">vs mês anterior (abril)</span>
+            {data.midiaVsAnterior.map((v, i) => (
+              <span className="rep-vsprev-item" key={i}>
+                {v.text} <b className={v.tone === 'down' ? 'down' : 'up'}>{v.value}</b>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* FUNIL MÍDIA PAGA */}
         <section className="rep-section">
-          <h2 className="rep-section-title">Funil de Conversão</h2>
+          <h2 className="rep-section-title">Funil de Conversão · Mídia Paga</h2>
           <div className="rep-funnel-wrap">
             <Funnel data={data} theme={theme} />
             <div className="rep-funnel-foot">
@@ -146,52 +256,6 @@ export function Relatorio({ data, theme }: RelatorioProps) {
             {sec.subtotal && <div className="rep-subtotal" dangerouslySetInnerHTML={{ __html: sec.subtotal }} />}
           </section>
         ))}
-
-        {/* OPERAÇÃO DA LOJA · POR CANAL (incremento) */}
-        {data.operacao && (
-          <section className="rep-section">
-            <h2 className="rep-section-title">{data.operacao.title}</h2>
-            {data.operacao.desc && <p className="rep-section-desc">{data.operacao.desc}</p>}
-            <div className="rep-op-total">
-              {[
-                { label: 'Pedidos', value: data.operacao.total.pedidos },
-                { label: 'Faturamento', value: data.operacao.total.faturamento, accent: true },
-                { label: 'Ticket Médio', value: data.operacao.total.ticket },
-                { label: 'Novos Clientes', value: data.operacao.total.novos },
-              ].map((k) => (
-                <div className="rep-op-total-item" key={k.label}>
-                  <div className="rep-op-total-label">{k.label}</div>
-                  <div className={`rep-op-total-value mono${k.accent ? ' accent' : ''}`}>{k.value}</div>
-                </div>
-              ))}
-            </div>
-            <div className="rep-op-grid">
-              {data.operacao.canais.map((canal) => (
-                <div className={`rep-op-card${canal.tom ? ' ' + canal.tom : ''}`} key={canal.nome}>
-                  <div className="rep-op-card-head">
-                    <span className="rep-op-card-name">{canal.nome}</span>
-                    <span className="rep-op-card-fat mono">{canal.faturamento}</span>
-                  </div>
-                  <div className="rep-op-card-sub">
-                    {canal.pedidos} pedidos · ticket {canal.ticket} · {canal.novos} novos
-                  </div>
-                  <div className="rep-op-modais">
-                    {canal.modalidades.map((m) => (
-                      <div className="rep-op-modal" key={m.label}>
-                        <span className="rep-op-modal-label">{m.label}</span>
-                        <span className="rep-op-modal-track">
-                          <span className="rep-op-modal-fill" style={{ width: `${m.pct}%` }} />
-                        </span>
-                        <span className="rep-op-modal-val mono">{m.pedidos} · {m.valor}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {data.operacao.note && <p className="rep-note">{data.operacao.note}</p>}
-          </section>
-        )}
 
         {/* FOOTER */}
         <footer className="rep-footer">

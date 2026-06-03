@@ -237,6 +237,41 @@
 .rep-op-modal-fill { display: block; height: 100%; background: var(--r-accent); border-radius: 999px; }
 .rep-op-modal-val { font-size: 10.5px; color: var(--r-faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
+/* proporção por canal (barra empilhada) */
+.rep-op-prop { margin: 14px 0 16px; }
+.rep-op-prop-bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.06); }
+.rep-op-prop-seg { height: 100%; }
+.rep-op-prop-seg.site { background: var(--r-accent); }
+.rep-op-prop-seg.manual { background: var(--r-faint); }
+.rep-op-prop-seg.ifood { background: var(--r-accent2); }
+.rep-op-prop-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+.rep-op-prop-leg { font-size: 11px; color: var(--r-muted); display: inline-flex; align-items: center; gap: 6px; }
+.rep-op-prop-leg b { color: var(--r-ink); }
+.rep-op-prop-dot { width: 9px; height: 9px; border-radius: 99px; display: inline-block; background: var(--r-faint); }
+.rep-op-prop-dot.site { background: var(--r-accent); }
+.rep-op-prop-dot.manual { background: var(--r-faint); }
+.rep-op-prop-dot.ifood { background: var(--r-accent2); }
+
+/* funil do cardápio digital (Site) — passos em linha */
+.rep-sfun { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 560px) { .rep-sfun { grid-template-columns: repeat(5, 1fr); } }
+.rep-sfun-step { background: var(--r-card); border: 1px solid var(--r-line); border-radius: 12px; padding: 12px 12px 14px; }
+.rep-sfun-step.final { border-color: color-mix(in srgb, var(--r-accent) 50%, var(--r-line)); background: color-mix(in srgb, var(--r-accent) 10%, var(--r-card)); }
+.rep-sfun-label { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--r-faint); font-weight: 700; }
+.rep-sfun-value { font-size: 22px; font-weight: 800; color: var(--r-ink); margin: 2px 0 8px; }
+.rep-sfun-track { height: 5px; background: rgba(255,255,255,.07); border-radius: 999px; overflow: hidden; }
+.rep-sfun-fill { display: block; height: 100%; background: var(--r-accent); border-radius: 999px; }
+.rep-sfun-step.final .rep-sfun-fill { background: #3ec569; }
+.rep-sfun-pct { font-size: 11px; color: var(--r-muted); margin-top: 6px; font-weight: 600; }
+
+/* comparativo vs mês anterior */
+.rep-vsprev { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 14px 0 4px; padding: 12px 14px; background: rgba(0,0,0,.25); border-radius: 10px; }
+.rep-vsprev-label { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--r-faint); font-weight: 700; }
+.rep-vsprev-item { font-size: 12px; color: var(--r-muted); }
+.rep-vsprev-item b { font-variant-numeric: tabular-nums; }
+.rep-vsprev-item b.up { color: var(--r-ok); }
+.rep-vsprev-item b.down { color: var(--r-warn); }
+
 /* FOOTER */
 .rep-footer { margin-top: 40px; padding-top: 28px; border-top: 2px solid var(--r-accent); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .rep-footer-tagline { font-size: 12px; color: var(--r-faint); letter-spacing: .04em; line-height: 1.4; }
