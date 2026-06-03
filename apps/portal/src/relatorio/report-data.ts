@@ -41,17 +41,18 @@ export interface RepSection {
 }
 export interface RepFunnelStage { label: string; value: string; drop?: string; dropOk?: boolean; final?: boolean }
 // ── Operação da loja por canal (cardápio digital / PDV) — incremento opcional ──
-export interface RepOpModal { label: string; pedidos: string; valor: string; pct: number /* 0-100 p/ barra */ }
+export interface RepOpModal { label: string; pedidos?: string; valor: string; pct: number /* 0-100 p/ barra */ }
 export interface RepOpCanal {
   nome: string;
   tom?: 'site' | 'manual' | 'ifood';
-  pedidos: string; faturamento: string; ticket: string; novos: string;
+  pedidos: string; faturamento: string; ticket: string; novos?: string;
   modalidades: RepOpModal[];
 }
 export interface RepOperacao {
   title: string;
   desc?: string;
-  total: { pedidos: string; faturamento: string; ticket: string; novos: string };
+  /** KPIs do topo (Pedidos, Faturamento, etc.) — flexível por cliente. */
+  total: { label: string; value: string; accent?: boolean }[];
   /** proporção do faturamento por canal (barra empilhada). */
   proporcao?: { label: string; pct: number; tom?: 'site' | 'manual' | 'ifood' }[];
   canais: RepOpCanal[];
@@ -225,6 +226,43 @@ const suprema: RelatorioData = {
       ],
     },
   ],
+  operacao: {
+    title: 'Operação da Loja · por modalidade',
+    desc: 'Vendas de Maio por modalidade e forma de pagamento. Pix automático = checkout do cardápio digital próprio · iFood (online) = canal marketplace.',
+    total: [
+      { label: 'Pedidos', value: '1.688' },
+      { label: 'Faturamento', value: 'R$ 205.830', accent: true },
+      { label: 'Ticket Médio', value: 'R$ 121,94' },
+      { label: 'Cardápio Digital', value: 'R$ 30.677' },
+    ],
+    proporcao: [
+      { label: 'Entrega', pct: 71.3, tom: 'site' },
+      { label: 'Retirada', pct: 28.7, tom: 'manual' },
+    ],
+    canais: [
+      {
+        nome: 'Entrega', tom: 'site',
+        pedidos: '1.167', faturamento: 'R$ 146.739', ticket: 'R$ 125,74',
+        modalidades: [
+          { label: 'Cartão', valor: 'R$ 66.837', pct: 45.5 },
+          { label: 'iFood', valor: 'R$ 44.220', pct: 30.1 },
+          { label: 'Pix (cardápio)', valor: 'R$ 23.958', pct: 16.3 },
+          { label: 'Dinheiro', valor: 'R$ 11.725', pct: 8.0 },
+        ],
+      },
+      {
+        nome: 'Retirada', tom: 'manual',
+        pedidos: '521', faturamento: 'R$ 59.091', ticket: 'R$ 113,42',
+        modalidades: [
+          { label: 'Cartão', valor: 'R$ 44.013', pct: 74.5 },
+          { label: 'Pix (cardápio)', valor: 'R$ 6.719', pct: 11.4 },
+          { label: 'Dinheiro', valor: 'R$ 6.283', pct: 10.6 },
+          { label: 'iFood', valor: 'R$ 2.076', pct: 3.5 },
+        ],
+      },
+    ],
+    note: 'Mesa: 0 pedidos no período. *Cartão e Dinheiro são pagos no ato (entrega/balcão) e não identificam o canal de origem — por isso a operação aqui é por modalidade + forma de pagamento (e não Site/Manual/iFood como em outros clientes).',
+  },
   footer: FENICE_FOOTER,
 };
 
@@ -373,7 +411,12 @@ const arena: RelatorioData = {
   operacao: {
     title: 'Operação da Loja · por canal',
     desc: 'Panorama completo da loja em Maio (todos os canais — não só o que a mídia paga atribuiu). Mostra o peso do canal próprio digital (Site) vs iFood vs balcão/PDV.',
-    total: { pedidos: '1.403', faturamento: 'R$ 139.906', ticket: 'R$ 99,72', novos: '211' },
+    total: [
+      { label: 'Pedidos', value: '1.403' },
+      { label: 'Faturamento', value: 'R$ 139.906', accent: true },
+      { label: 'Ticket Médio', value: 'R$ 99,72' },
+      { label: 'Novos Clientes', value: '211' },
+    ],
     proporcao: [
       { label: 'Balcão/PDV', pct: 52.3, tom: 'manual' },
       { label: 'Site', pct: 25.7, tom: 'site' },
@@ -425,13 +468,6 @@ const arena: RelatorioData = {
       { text: 'Melhor semana (01–03/05)', value: '26,8%' },
     ],
   },
-  midiaVsAnterior: [
-    { text: 'Investido', value: '▲ 84,9%', tone: 'up' },
-    { text: 'Vendas', value: '▲ 75%', tone: 'up' },
-    { text: 'Faturamento', value: '▲ 57,7%', tone: 'up' },
-    { text: 'ROAS', value: '▼ 14,8%', tone: 'down' },
-    { text: 'Frequência', value: '5,31 → 2,37', tone: 'up' },
-  ],
   footer: FENICE_FOOTER,
 };
 

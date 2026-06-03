@@ -89,12 +89,7 @@ export function Relatorio({ data, theme }: RelatorioProps) {
             <h2 className="rep-section-title">{data.operacao.title}</h2>
             {data.operacao.desc && <p className="rep-section-desc">{data.operacao.desc}</p>}
             <div className="rep-op-total">
-              {[
-                { label: 'Pedidos', value: data.operacao.total.pedidos },
-                { label: 'Faturamento', value: data.operacao.total.faturamento, accent: true },
-                { label: 'Ticket Médio', value: data.operacao.total.ticket },
-                { label: 'Novos Clientes', value: data.operacao.total.novos },
-              ].map((k) => (
+              {data.operacao.total.map((k) => (
                 <div className="rep-op-total-item" key={k.label}>
                   <div className="rep-op-total-label">{k.label}</div>
                   <div className={`rep-op-total-value mono${k.accent ? ' accent' : ''}`}>{k.value}</div>
@@ -131,7 +126,8 @@ export function Relatorio({ data, theme }: RelatorioProps) {
                     <span className="rep-op-card-fat mono">{canal.faturamento}</span>
                   </div>
                   <div className="rep-op-card-sub">
-                    {canal.pedidos} pedidos · ticket {canal.ticket} · {canal.novos} novos
+                    {canal.pedidos} pedidos · ticket {canal.ticket}
+                    {canal.novos ? ` · ${canal.novos} novos` : ''}
                   </div>
                   <div className="rep-op-modais">
                     {canal.modalidades.map((m) => (
@@ -140,7 +136,7 @@ export function Relatorio({ data, theme }: RelatorioProps) {
                         <span className="rep-op-modal-track">
                           <span className="rep-op-modal-fill" style={{ width: `${m.pct}%` }} />
                         </span>
-                        <span className="rep-op-modal-val mono">{m.pedidos} · {m.valor}</span>
+                        <span className="rep-op-modal-val mono">{m.pedidos ? `${m.pedidos} · ` : ''}{m.valor}</span>
                       </div>
                     ))}
                   </div>
