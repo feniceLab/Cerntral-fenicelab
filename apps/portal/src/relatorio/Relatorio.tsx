@@ -147,6 +147,52 @@ export function Relatorio({ data, theme }: RelatorioProps) {
           </section>
         ))}
 
+        {/* OPERAÇÃO DA LOJA · POR CANAL (incremento) */}
+        {data.operacao && (
+          <section className="rep-section">
+            <h2 className="rep-section-title">{data.operacao.title}</h2>
+            {data.operacao.desc && <p className="rep-section-desc">{data.operacao.desc}</p>}
+            <div className="rep-op-total">
+              {[
+                { label: 'Pedidos', value: data.operacao.total.pedidos },
+                { label: 'Faturamento', value: data.operacao.total.faturamento, accent: true },
+                { label: 'Ticket Médio', value: data.operacao.total.ticket },
+                { label: 'Novos Clientes', value: data.operacao.total.novos },
+              ].map((k) => (
+                <div className="rep-op-total-item" key={k.label}>
+                  <div className="rep-op-total-label">{k.label}</div>
+                  <div className={`rep-op-total-value mono${k.accent ? ' accent' : ''}`}>{k.value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="rep-op-grid">
+              {data.operacao.canais.map((canal) => (
+                <div className={`rep-op-card${canal.tom ? ' ' + canal.tom : ''}`} key={canal.nome}>
+                  <div className="rep-op-card-head">
+                    <span className="rep-op-card-name">{canal.nome}</span>
+                    <span className="rep-op-card-fat mono">{canal.faturamento}</span>
+                  </div>
+                  <div className="rep-op-card-sub">
+                    {canal.pedidos} pedidos · ticket {canal.ticket} · {canal.novos} novos
+                  </div>
+                  <div className="rep-op-modais">
+                    {canal.modalidades.map((m) => (
+                      <div className="rep-op-modal" key={m.label}>
+                        <span className="rep-op-modal-label">{m.label}</span>
+                        <span className="rep-op-modal-track">
+                          <span className="rep-op-modal-fill" style={{ width: `${m.pct}%` }} />
+                        </span>
+                        <span className="rep-op-modal-val mono">{m.pedidos} · {m.valor}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {data.operacao.note && <p className="rep-note">{data.operacao.note}</p>}
+          </section>
+        )}
+
         {/* FOOTER */}
         <footer className="rep-footer">
           <div className="rep-footer-tagline" dangerouslySetInnerHTML={{ __html: data.footer.tagline }} />

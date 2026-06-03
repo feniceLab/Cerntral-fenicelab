@@ -74,6 +74,7 @@ let renovacaoCache = { data: null, ts: 0 };
 let adminCache = { data: null, ts: 0 };
 let clientsCache = { data: null, ts: 0 };
 let saldoCache = { data: null, ts: 0 };
+let insightsCache = {}; // keyed por período (since_until ou preset:last_month)
 
 // ──────────────────────────────────────────────────────────────────────────────
 // BASIC AUTH (área admin)
@@ -625,6 +626,80 @@ async function fetchSaldos() {
   return result;
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// PÚBLICO — insights de mídia paga por cliente (account-level), por período.
+// Puxa via Graph (act_<id>/insights). Funciona inclusive em contas NÃO MCP-enabled
+// (ex.: Arena) — o gate do MCP não vale pro Graph direto.
+// ──────────────────────────────────────────────────────────────────────────────
+const actVal = (arr, type) => {
+  const f = (arr || []).find((x) => x.action_type === type);
+  return f ? Number(f.value) : null;
+};
+
+async function fetchInsights({ since, until, preset } = {}) {
+  const periodKey = since && until ? `${since}_${until}` : `preset:${preset || 'last_month'}`;
+  const now = Date.now();
+  const cached = insightsCache[periodKey];
+  if (cached && (now - cached.ts) < CACHE_TTL_MS) return cached.data;
+
+  let mapping = { clients: [] };
+  try {
+    const raw = await fs.readFile(path.join(__dirname, 'data', 'clients-mapping.json'), 'utf-8');
+    mapping = JSON.parse(raw);
+  } catch {
+    return { updated_at: new Date().toISOString(), error: 'mapping_missing', clients: [] };
+  }
+
+  const token = await readToken();
+  if (!token) return { updated_at: new Date().toISOString(), error: 'sem_token', clients: [] };
+
+  const rangeParam = since && until
+    ? `time_range=${encodeURIComponent(JSON.stringify({ since, until }))}`
+    : `date_preset=${encodeURIComponent(preset || 'last_month')}`;
+  const fields = 'spend,impressions,reach,frequency,clicks,ctr,cpm,cpc,purchase_roas,actions,action_values';
+
+  const targets = mapping.clients.filter((c) => c.ad_account_id);
+  const clients = await Promise.all(targets.map(async (c) => {
+    const base = { slug: c.slug, name: c.name, agencia: c.agencia || null, ad_account_id: c.ad_account_id };
+    try {
+      const url = `https://graph.facebook.com/v23.0/act_${c.ad_account_id}/insights?level=account&fields=${fields}&${rangeParam}&access_token=${token}`;
+      const r = await fetch(url);
+      const j = await r.json();
+      if (j.error) return { ...base, found: false, error: j.error.message };
+      const a = (j.data || [])[0];
+      if (!a) return { ...base, found: false, error: null };
+      const purchases = actVal(a.actions, 'omni_purchase');
+      const revenue = actVal(a.action_values, 'omni_purchase');
+      const num = (v) => (v != null && v !== '' ? Number(v) : null);
+      return {
+        ...base,
+        found: true,
+        error: null,
+        spend_cents: a.spend != null ? Math.round(Number(a.spend) * 100) : null,
+        revenue_cents: revenue != null ? Math.round(revenue * 100) : null,
+        purchases: purchases != null ? Math.round(purchases) : null,
+        roas: actVal(a.purchase_roas, 'omni_purchase'),
+        impressions: num(a.impressions),
+        reach: num(a.reach),
+        frequency: num(a.frequency),
+        clicks: num(a.clicks),
+        ctr: num(a.ctr),
+        cpm: num(a.cpm),
+        cpc: num(a.cpc),
+        link_clicks: actVal(a.actions, 'link_click'),
+        add_to_cart: actVal(a.actions, 'add_to_cart'),
+        initiate_checkout: actVal(a.actions, 'initiate_checkout'),
+      };
+    } catch (e) {
+      return { ...base, found: false, error: e.message };
+    }
+  }));
+
+  const result = { updated_at: new Date().toISOString(), period: periodKey, clients };
+  insightsCache[periodKey] = { data: result, ts: now };
+  return result;
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     // Área admin (Basic Auth) — protege HTML e JSON
@@ -685,6 +760,23 @@ const server = http.createServer(async (req, res) => {
       const force = req.url.includes('force=1');
       if (force) saldoCache = { data: null, ts: 0 };
       const data = await fetchSaldos();
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*',
+      });
+      res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    if (req.url === '/api/insights' || req.url.startsWith('/api/insights?')) {
+      const u = new URL(req.url, 'http://x');
+      if (u.searchParams.get('force') === '1') insightsCache = {};
+      const data = await fetchInsights({
+        since: u.searchParams.get('since') || undefined,
+        until: u.searchParams.get('until') || undefined,
+        preset: u.searchParams.get('preset') || undefined,
+      });
       res.writeHead(200, {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-cache',

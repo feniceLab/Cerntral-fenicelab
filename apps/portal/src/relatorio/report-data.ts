@@ -40,6 +40,21 @@ export interface RepSection {
   subtotal?: string;
 }
 export interface RepFunnelStage { label: string; value: string; drop?: string; dropOk?: boolean; final?: boolean }
+// ── Operação da loja por canal (cardápio digital / PDV) — incremento opcional ──
+export interface RepOpModal { label: string; pedidos: string; valor: string; pct: number /* 0-100 p/ barra */ }
+export interface RepOpCanal {
+  nome: string;
+  tom?: 'site' | 'manual' | 'ifood';
+  pedidos: string; faturamento: string; ticket: string; novos: string;
+  modalidades: RepOpModal[];
+}
+export interface RepOperacao {
+  title: string;
+  desc?: string;
+  total: { pedidos: string; faturamento: string; ticket: string; novos: string };
+  canais: RepOpCanal[];
+  note?: string;
+}
 export interface RelatorioData {
   slug: string;
   cliente: string;
@@ -55,6 +70,8 @@ export interface RelatorioData {
     foot: { text: string; value: string; accent?: boolean }[];
   };
   sections: RepSection[];
+  /** Operação da loja por canal (Site/Manual/iFood) — incremento opcional. */
+  operacao?: RepOperacao;
   footer: { tagline: string; period: string };
 }
 
@@ -339,6 +356,40 @@ const arena: RelatorioData = {
       subtotal: 'Subtotal Sazonais · R$ 156,24 invest · 4 vendas · faturamento R$ 343,15 · ROAS médio <b>2,20×</b>',
     },
   ],
+  operacao: {
+    title: 'Operação da Loja · por canal',
+    desc: 'Panorama completo da loja em Maio (todos os canais — não só o que a mídia paga atribuiu). Mostra o peso do canal próprio digital (Site) vs iFood vs balcão/PDV.',
+    total: { pedidos: '1.403', faturamento: 'R$ 139.906', ticket: 'R$ 99,72', novos: '211' },
+    canais: [
+      {
+        nome: 'Site · cardápio próprio', tom: 'site',
+        pedidos: '384', faturamento: 'R$ 35.931', ticket: 'R$ 93,57', novos: '85',
+        modalidades: [
+          { label: 'Entrega', pedidos: '294', valor: 'R$ 29.178', pct: 81.2 },
+          { label: 'Retirada', pedidos: '78', valor: 'R$ 5.563', pct: 15.5 },
+          { label: 'Presencial', pedidos: '12', valor: 'R$ 1.190', pct: 3.3 },
+        ],
+      },
+      {
+        nome: 'Manual · balcão/PDV', tom: 'manual',
+        pedidos: '642', faturamento: 'R$ 73.212', ticket: 'R$ 114,04', novos: '13',
+        modalidades: [
+          { label: 'Presencial', pedidos: '472', valor: 'R$ 60.019', pct: 82.0 },
+          { label: 'Retirada', pedidos: '101', valor: 'R$ 7.098', pct: 9.7 },
+          { label: 'Entrega', pedidos: '69', valor: 'R$ 6.095', pct: 8.3 },
+        ],
+      },
+      {
+        nome: 'iFood · marketplace', tom: 'ifood',
+        pedidos: '377', faturamento: 'R$ 30.762', ticket: 'R$ 81,60', novos: '113',
+        modalidades: [
+          { label: 'Entrega', pedidos: '388*', valor: 'R$ 30.035', pct: 97.6 },
+          { label: 'Retirada', pedidos: '9*', valor: 'R$ 728', pct: 2.4 },
+        ],
+      },
+    ],
+    note: 'Canal próprio (Site) rende mais que o iFood, com ticket maior e sem comissão de marketplace — é o canal mais rentável e o destino natural da mídia paga. *iFood: divisão por pedido em reconfirmação (faturamento confere; contagem de pedidos diverge da soma das modalidades).',
+  },
   footer: FENICE_FOOTER,
 };
 

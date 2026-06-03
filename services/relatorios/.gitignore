@@ -15,6 +15,7 @@ data/client-aliases.json
 data/crons.json
 data/snapshot.json
 data/suprema.json
+data/alerta-saldo-state.json
 data/*.local.json
 
 # Logs e cache

@@ -212,6 +212,31 @@
 .rep-subtotal { font-size: 11px; color: var(--r-muted); padding: 10px 14px; background: rgba(0,0,0,.3); border-radius: 8px; margin-top: 12px; font-weight: 500; }
 .rep-subtotal b { color: var(--r-ok); }
 
+/* OPERAÇÃO DA LOJA · POR CANAL (incremento) */
+.rep-op-total { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+@media (min-width: 560px) { .rep-op-total { grid-template-columns: repeat(4, 1fr); } }
+.rep-op-total-item { background: var(--r-card); border: 1px solid var(--r-line); border-radius: 12px; padding: 14px 16px; }
+.rep-op-total-label { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--r-faint); font-weight: 700; }
+.rep-op-total-value { font-size: 20px; font-weight: 800; color: var(--r-ink); margin-top: 4px; }
+.rep-op-total-value.accent { color: var(--r-accent); }
+
+.rep-op-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 720px) { .rep-op-grid { grid-template-columns: repeat(3, 1fr); } }
+.rep-op-card { background: var(--r-card); border: 1px solid var(--r-line); border-left: 3px solid var(--r-muted); border-radius: 12px; padding: 16px; }
+.rep-op-card.site { border-left-color: var(--r-accent); }
+.rep-op-card.manual { border-left-color: var(--r-faint); }
+.rep-op-card.ifood { border-left-color: var(--r-accent2); }
+.rep-op-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.rep-op-card-name { font-size: 13px; font-weight: 700; color: var(--r-ink); }
+.rep-op-card-fat { font-size: 16px; font-weight: 800; color: var(--r-accent); white-space: nowrap; }
+.rep-op-card-sub { font-size: 11px; color: var(--r-muted); margin-top: 4px; }
+.rep-op-modais { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.rep-op-modal { display: grid; grid-template-columns: 72px 1fr auto; gap: 8px; align-items: center; }
+.rep-op-modal-label { font-size: 11px; color: var(--r-muted); font-weight: 600; }
+.rep-op-modal-track { height: 6px; background: rgba(255,255,255,.07); border-radius: 999px; overflow: hidden; }
+.rep-op-modal-fill { display: block; height: 100%; background: var(--r-accent); border-radius: 999px; }
+.rep-op-modal-val { font-size: 10.5px; color: var(--r-faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
 /* FOOTER */
 .rep-footer { margin-top: 40px; padding-top: 28px; border-top: 2px solid var(--r-accent); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .rep-footer-tagline { font-size: 12px; color: var(--r-faint); letter-spacing: .04em; line-height: 1.4; }
