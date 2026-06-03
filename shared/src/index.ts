@@ -40,3 +40,16 @@ export type { ApprovalCardProps } from './components/ApprovalCard';
 export { default as tokens } from './tokens.json';
 
 export * from './lib/supabase';
+
+// Clientes Fenice Lab — fonte da verdade (identidade canônica).
+export {
+  CLIENTES_FENICE,
+  SLUGS_FENICE,
+  AGENCIA,
+  clienteBySlug,
+  reportPath,
+  hubPath,
+} from './clientes/fenice';
+export type { ClienteFenice, ClienteStatus } from './clientes/fenice';
+export { CLIENTE_THEMES, themeBySlug, themeFromCor } from './clientes/themes';
+export type { ClienteTheme } from './clientes/themes';

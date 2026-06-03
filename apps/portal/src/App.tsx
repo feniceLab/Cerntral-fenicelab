@@ -94,11 +94,12 @@ function PortalSurface({ route, go }: { route: PortalRoute; go: (r: PortalRoute)
 function TrafegoSurface() {
   const base =
     ((import.meta as any).env?.VITE_TRAFEGO_URL as string) || 'https://relatorios.fenicelab.com.br';
-  // relatório vertical do cliente (cai bem no mobile); slug fixo por ora — virá da sessão
+  // slug do cliente do portal: virá da sessão; por ora via env (default suprema).
+  const slug = ((import.meta as any).env?.VITE_CLIENT_SLUG as string) || 'suprema';
   return (
     <iframe
       title="Tráfego Pago"
-      src={`${base}/suprema-report.html`}
+      src={`${base}/${slug}-report.html`}
       style={{ border: 0, width: '100%', height: '100%', minHeight: 620, display: 'block', background: '#2A211C' }}
       allow="fullscreen"
     />

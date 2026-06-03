@@ -195,11 +195,12 @@ export interface TPCampanha {
   conjuntos: TPConjunto[];
 }
 
+// ⚠️ MOCK legado (placeholder do submódulo de Tráfego). Só clientes Fenice Lab —
+// nada de Starken aqui. Será substituído por dados reais na consolidação do serviço de tráfego.
 export const TP_CLIENTES: TPCliente[] = [
   { letter: 'S', nome: 'Suprema Pizza', gasto: 412.8, roas: 4.8, vendas: 1980, ativas: 2, total: 3, alerta: null, tend: [8, 12, 9, 15, 14, 22, 28] },
-  { letter: 'O', nome: 'Oca Restaurante', gasto: 168.4, roas: 3.1, vendas: 522, ativas: 1, total: 2, alerta: 'pacing', tend: [5, 6, 8, 7, 9, 11, 10] },
+  { letter: 'O', nome: 'Restaurante Oca', gasto: 168.4, roas: 3.1, vendas: 522, ativas: 1, total: 2, alerta: 'pacing', tend: [5, 6, 8, 7, 9, 11, 10] },
   { letter: 'A', nome: 'Arena Gourmet', gasto: 0, roas: 0, vendas: 0, ativas: 0, total: 1, alerta: 'setup', tend: [0, 0, 0, 0, 0, 0, 0] },
-  { letter: 'F', nome: 'Feio Burguer', gasto: 286.1, roas: 5.6, vendas: 1602, ativas: 2, total: 2, alerta: 'budget', tend: [10, 14, 13, 18, 20, 24, 26] },
 ];
 
 export const TP_CAMPANHAS: TPCampanha[] = [
