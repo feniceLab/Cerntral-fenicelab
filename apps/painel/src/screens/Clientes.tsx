@@ -4,8 +4,8 @@ import { Topbar, Scroll } from '../components/Chrome';
 
 // Identidade vem do módulo canônico (só Fenice Lab). A API só ENRIQUECE o
 // status ao vivo — clientes de outras agências (Starken) nunca aparecem aqui.
-const API =
-  `${(import.meta as any).env?.VITE_TRAFEGO_URL || 'https://relatorios.fenicelab.com.br'}/api/clients`;
+// same-domain por padrão (OpenResty proxy /api → serviço). Dev: VITE_TRAFEGO_URL no .env.local.
+const API = `${(import.meta as any).env?.VITE_TRAFEGO_URL || ''}/api/clients`;
 
 interface ApiCliente {
   slug: string;

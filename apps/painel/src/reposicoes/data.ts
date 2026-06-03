@@ -13,7 +13,8 @@ export const MES = 'Junho 2026';
 // cartao = cobra no cartão (sem "saldo baixo"); cap = disponível = cap − gasto.
 export type NivelSaldo = 'critico' | 'baixo' | 'ok' | 'cartao' | 'sincronizar';
 
-const TRAFEGO = (import.meta as any).env?.VITE_TRAFEGO_URL || 'https://relatorios.fenicelab.com.br';
+// same-domain por padrão (OpenResty proxy /api → serviço). Dev: VITE_TRAFEGO_URL no .env.local.
+const TRAFEGO = (import.meta as any).env?.VITE_TRAFEGO_URL || '';
 
 // gasto/dia ≈ investido de maio ÷ 31 (base p/ cobertura em dias enquanto não há gasto diário ao vivo)
 const GASTO_DIA: Record<string, number | null> = { suprema: 75.83, arena: 36.68, oca: null };
