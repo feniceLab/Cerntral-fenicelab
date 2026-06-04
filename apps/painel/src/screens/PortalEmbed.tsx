@@ -31,9 +31,18 @@ export function PortalEmbed({ cliente, onBack }: PortalEmbedProps) {
   const actor = nomeExibicao || email || undefined;
   const [active, setActive] = useState<EmbedView>('portal');
 
-  // Same-origin: /painel e /portal vivem no mesmo domínio (central.fenicelab.com.br),
-  // então o path relativo basta e o iframe herda o localStorage (sessão Supabase).
-  const portalSrc = `/portal/?c=${encodeURIComponent(cliente.slug)}`;
+  // PRODUÇÃO: /painel e /portal vivem no mesmo domínio (central.fenicelab.com.br),
+  // então `/portal/` é same-origin e o iframe herda o localStorage (sessão Supabase).
+  // DEV/PREVIEW: painel (5172) e portal (5171) são dev servers SEPARADOS — `/portal/`
+  // não existe no server do painel. Usa VITE_PORTAL_BASE (ex http://localhost:5171)
+  // ou cai no dev server padrão do portal. (Em dev é cross-origin → sem sessão, só visual.)
+  const env = (import.meta as any).env || {};
+  const portalBase: string = env.VITE_PORTAL_BASE
+    ? env.VITE_PORTAL_BASE.replace(/\/$/, '')
+    : env.DEV
+      ? 'http://localhost:5171/portal'
+      : '/portal';
+  const portalSrc = `${portalBase}/?c=${encodeURIComponent(cliente.slug)}`;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
