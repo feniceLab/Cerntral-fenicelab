@@ -266,7 +266,7 @@ export function WarRoomShell({
         )}
         {tab === 'criativos' && (
           <div className="perf-tab-content">
-            <Criativos slug={slug} preset={opt.preset} actor={userEmail} />
+            <Criativos slug={slug} preset={opt.preset} actor={userEmail} authId={userAuthId} />
           </div>
         )}
         {tab === 'demografia' && (
@@ -276,7 +276,7 @@ export function WarRoomShell({
         )}
         {tab === 'favoritos' && (
           <div className="perf-tab-content">
-            <FavoritosCriativos slug={slug} preset={opt.preset} />
+            <FavoritosCriativos slug={slug} preset={opt.preset} authId={userAuthId} />
           </div>
         )}
       </div>

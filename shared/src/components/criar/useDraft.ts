@@ -5,7 +5,15 @@
 // ============================================================
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { supabase } from '../../lib/supabase';
 import type { DraftCampanha, DraftSaveStatus } from './types';
+
+/** Header Authorization: Bearer <access_token> (vazio se sem sessão). */
+async function authHeader(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 const LS_KEY = (slug: string, draftId?: string) =>
   `fenice.criar.draft.${slug}.${draftId || 'novo'}`;
@@ -84,7 +92,7 @@ export function useDraft({ apiBase, slug, initialDraftId, initial, actorAuthId, 
       };
       const resp = await fetchJSON<{ ok: boolean; draft: DraftCampanha }>(
         `${apiBase}/api/campaign/draft`,
-        { method: 'POST', body: JSON.stringify(payload) }
+        { method: 'POST', headers: await authHeader(), body: JSON.stringify(payload) }
       );
       if (resp.draft?.id && !draftRef.current.id) {
         setDraft((d) => ({ ...d, id: resp.draft.id }));
@@ -128,6 +136,7 @@ export function useDraft({ apiBase, slug, initialDraftId, initial, actorAuthId, 
       };
       await fetchJSON<{ ok: boolean }>(`${apiBase}/api/campaign/submit`, {
         method: 'POST',
+        headers: await authHeader(),
         body: JSON.stringify(payload),
       });
       setDraft((d) => ({ ...d, status: 'aguardando_aprovacao' }));

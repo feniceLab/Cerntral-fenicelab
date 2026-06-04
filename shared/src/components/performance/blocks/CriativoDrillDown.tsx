@@ -1,7 +1,7 @@
 // CriativoDrillDown — modal full-screen com detalhe de um Ad (criativo).
 // Consome GET /api/ad-detail?slug&ad_id&preset (backend em paralelo; fallback gracioso).
 // Reusa padrão de overlay/animação/UX do CampanhaDrillDown.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { FavoritoStar } from './FavoritoStar';
 import { SkeletonTable } from './Skeletons';
 import {
@@ -147,7 +147,6 @@ export function CriativoDrillDown({
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [localToast, setLocalToast] = useState<string | null>(null);
 
   const actions = useEntityActions(slug, actor || 'Painel');
 
@@ -383,19 +382,6 @@ export function CriativoDrillDown({
                     ▶ Reativar
                   </button>
                 )}
-                <button
-                  type="button"
-                  className="criativo-dd-action"
-                  onClick={() => {
-                    // Stub: backend de duplicação não implementado ainda
-                    // eslint-disable-next-line no-console
-                    console.log('[CriativoDrillDown] duplicar (stub)', ad.ad_id);
-                    setLocalToast('Duplicar criativo · em breve');
-                    window.setTimeout(() => setLocalToast(null), 3500);
-                  }}
-                >
-                  📋 Duplicar
-                </button>
               </div>
             </>
           )}
@@ -420,13 +406,6 @@ export function CriativoDrillDown({
 
       {/* Toast do hook (pause/resume) */}
       <ToastView toast={actions.toast} />
-
-      {/* Toast local (duplicar stub) */}
-      {localToast && (
-        <div className="perf-toast perf-toast--ok criativo-dd-toast-local" role="status">
-          {localToast}
-        </div>
-      )}
     </div>
   );
 }
@@ -437,17 +416,76 @@ export function CriativoDrillDown({
 function MediaPlayer({ creative }: { creative: CreativeInfo }) {
   const [videoErr, setVideoErr] = useState(false);
 
-  if (creative.type === 'video' && creative.video_url && !videoErr) {
+  const isVideo = creative.type === 'video';
+  const canPlay = isVideo && !!creative.video_url && !videoErr;
+
+  // Vídeo com source disponível → player nativo.
+  if (canPlay) {
     return (
       <video
         className="criativo-dd-media"
-        src={creative.video_url}
+        src={creative.video_url!}
         poster={creative.image_url_hd || undefined}
         controls
         playsInline
         preload="metadata"
         onError={() => setVideoErr(true)}
       />
+    );
+  }
+
+  // Vídeo SEM source (Meta não liberou) → thumbnail HD com overlay de "play".
+  // Se houver permalink, o thumbnail vira link pro Instagram (nova aba).
+  // Nunca renderiza <video> quebrado.
+  if (isVideo && creative.image_url_hd) {
+    const link = creative.instagram_permalink_url || undefined;
+    const wrapStyle: CSSProperties = {
+      position: 'relative',
+      display: 'block',
+      cursor: link ? 'pointer' : 'default',
+    };
+    const playStyle: CSSProperties = {
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      color: '#fff',
+      background: 'rgba(0,0,0,.28)',
+      borderRadius: 12,
+      pointerEvents: 'none',
+    };
+    const inner = (
+      <>
+        <img
+          className="criativo-dd-media"
+          src={creative.image_url_hd}
+          alt="Criativo (vídeo)"
+          loading="lazy"
+        />
+        <span style={playStyle} aria-hidden={!link}>
+          <span style={{ fontSize: 44, lineHeight: 1 }}>▶</span>
+          {link && (
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Ver no Instagram</span>
+          )}
+        </span>
+      </>
+    );
+    return link ? (
+      <a
+        href={link}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={wrapStyle}
+        title="Ver vídeo no Instagram"
+        aria-label="Ver vídeo no Instagram"
+      >
+        {inner}
+      </a>
+    ) : (
+      <div style={wrapStyle}>{inner}</div>
     );
   }
 

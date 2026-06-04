@@ -127,6 +127,30 @@ async function fetchHdBatch(adIds, token) {
   }
 }
 
+// Busca a source (mp4) + permalink de um vídeo.
+// A Meta frequentemente NÃO retorna `source` (depende de permissão/idade do vídeo);
+// nesse caso retornamos source=null e o caller cai no fallback de thumbnail.
+async function metaFetchVideoSource(videoId, token) {
+  if (!videoId) return null;
+  const url = `${META_API}/${videoId}?fields=source,permalink_url,picture&access_token=${token}`;
+  try {
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j.error) {
+      console.warn(`[ad-detail] video source ${videoId} error: ${j.error.message}`);
+      return null;
+    }
+    return {
+      source: typeof j.source === 'string' ? j.source : null,
+      permalink_url: typeof j.permalink_url === 'string' ? j.permalink_url : null,
+      picture: typeof j.picture === 'string' ? j.picture : null,
+    };
+  } catch (e) {
+    console.warn(`[ad-detail] video source ${videoId} fetch failed: ${e.message}`);
+    return null;
+  }
+}
+
 // Busca thumbnails HD de um vídeo (uri preferido)
 async function metaFetchVideoThumbs(videoId, token) {
   if (!videoId) return null;
@@ -447,12 +471,22 @@ export async function getAdDetail(adId, accountId, preset = 'last_30d') {
 
   const creative = buildCreativeFromRaw(creativeRes);
 
-  // Se for vídeo, tenta resolver melhor thumb / video_url
+  // Se for vídeo, tenta resolver a source (mp4) e o melhor thumbnail em paralelo.
+  // Se a Meta não devolver `source` (comum, depende de permissão), video_url fica null
+  // e o front cai no fallback de thumbnail HD + link "ver no Instagram".
   if (creative && creative.type === 'video' && creative.video_id) {
-    const videoThumb = await metaFetchVideoThumbs(creative.video_id, token);
-    if (videoThumb) {
-      creative.thumbnail_url = videoThumb;
-      if (!creative.image_url_hd) creative.image_url_hd = videoThumb;
+    const [videoSrc, videoThumb] = await Promise.all([
+      metaFetchVideoSource(creative.video_id, token),
+      metaFetchVideoThumbs(creative.video_id, token),
+    ]);
+    if (videoSrc?.source) creative.video_url = videoSrc.source;
+    if (videoSrc?.permalink_url && !creative.instagram_permalink_url) {
+      creative.instagram_permalink_url = videoSrc.permalink_url;
+    }
+    const bestThumb = videoThumb || videoSrc?.picture || null;
+    if (bestThumb) {
+      creative.thumbnail_url = bestThumb;
+      if (!creative.image_url_hd) creative.image_url_hd = bestThumb;
     }
   }
 

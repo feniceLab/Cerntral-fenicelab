@@ -52,7 +52,7 @@
 .perf-live-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--p-ok);
-  box-shadow: 0 0 0 0 rgba(94,122,79,.6);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--p-ok) 60%, transparent);
   animation: perfLivePulse 2.4s ease-out infinite;
 }
 .perf-live-dot.is-loading {
@@ -60,12 +60,12 @@
   animation: perfLivePulseAmber 0.9s ease-out infinite;
 }
 @keyframes perfLivePulse {
-  0% { box-shadow: 0 0 0 0 rgba(94,122,79,.55); }
-  100% { box-shadow: 0 0 0 10px rgba(94,122,79,0); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--p-ok) 55%, transparent); }
+  100% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--p-ok) 0%, transparent); }
 }
 @keyframes perfLivePulseAmber {
-  0% { box-shadow: 0 0 0 0 rgba(204,122,77,.55); }
-  100% { box-shadow: 0 0 0 8px rgba(204,122,77,0); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--p-warn) 55%, transparent); }
+  100% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--p-warn) 0%, transparent); }
 }
 
 /* ---------- TOOLBAR (tabs + período + ações) ---------- */
@@ -247,9 +247,9 @@
   padding: 8px 14px; border-radius: 999px;
   background: rgba(255,255,255,.06); color: var(--p-ink);
 }
-.perf-hero-badge--scale { background: rgba(94,122,79,.18); color: var(--p-ok); }
-.perf-hero-badge--hold { background: rgba(204,122,77,.18); color: var(--p-warn); }
-.perf-hero-badge--kill { background: rgba(178,58,46,.18); color: var(--p-bad); }
+.perf-hero-badge--scale { background: color-mix(in srgb, var(--p-ok) 18%, transparent); color: var(--p-ok); }
+.perf-hero-badge--hold { background: color-mix(in srgb, var(--p-warn) 18%, transparent); color: var(--p-warn); }
+.perf-hero-badge--kill { background: color-mix(in srgb, var(--p-bad) 18%, transparent); color: var(--p-bad); }
 .perf-hero-meta {
   font: 500 11.5px/1.6 var(--p-font-body); color: var(--p-faint);
   text-align: right; font-variant-numeric: tabular-nums;
@@ -268,8 +268,8 @@
   border: 1px solid var(--p-line);
   background: var(--p-card);
 }
-.perf-alert--critico { border-color: var(--p-bad); background: rgba(247,113,113,.08); }
-.perf-alert--aviso { border-color: var(--p-warn); background: rgba(251,191,36,.06); }
+.perf-alert--critico { border-color: var(--p-bad); background: color-mix(in srgb, var(--p-bad) 8%, transparent); }
+.perf-alert--aviso { border-color: var(--p-warn); background: color-mix(in srgb, var(--p-warn) 6%, transparent); }
 .perf-alert-icon { font-size: 16px; line-height: 1.2; flex-shrink: 0; }
 .perf-alert-body { flex: 1; min-width: 0; }
 .perf-alert-title { font: 700 13px/1.2 var(--p-font-body); color: var(--p-ink); }
@@ -285,7 +285,7 @@
 .perf-alerts-empty-icon {
   width: 36px; height: 36px; border-radius: 50%;
   display: grid; place-items: center;
-  background: rgba(94,122,79,.18); color: var(--p-ok);
+  background: color-mix(in srgb, var(--p-ok) 18%, transparent); color: var(--p-ok);
   font-size: 18px; font-weight: 800;
 }
 .perf-alerts-empty-title { font: 700 13px/1.2 var(--p-font-body); color: var(--p-ink); }
@@ -346,6 +346,22 @@
   background: linear-gradient(140deg, var(--p-card2), var(--p-card));
   border-color: var(--p-accent);
 }
+
+/* Hierarquia: KPIs financeiros (Faturamento, Investido, ROAS) em destaque */
+.perf-kpi.is-hero {
+  grid-column: span 2;
+  padding: 18px 20px;
+  background: linear-gradient(140deg, var(--p-card2), var(--p-card));
+  border-color: color-mix(in srgb, var(--p-accent) 55%, var(--p-line));
+}
+.perf-kpi.is-hero .perf-kpi-label { font-size: 10.5px; }
+.perf-kpi.is-hero .perf-kpi-value { font-size: 30px; }
+.perf-kpi.is-hero .perf-kpi-delta { font-size: 12px; }
+/* Em telas estreitas o span-2 deixaria buracos; volta a 1 col */
+@media (max-width: 480px) {
+  .perf-kpi.is-hero { grid-column: auto; padding: 14px 16px; }
+  .perf-kpi.is-hero .perf-kpi-value { font-size: 24px; }
+}
 .perf-kpi-label {
   font: 700 9.5px/1.1 var(--p-font-body);
   letter-spacing: .14em; text-transform: uppercase;
@@ -386,7 +402,7 @@
 .perf-funil-gargalo-tag {
   font: 700 9px/1 var(--p-font-body); letter-spacing: .14em;
   text-transform: uppercase; color: var(--p-bad);
-  background: rgba(247,113,113,.15);
+  background: color-mix(in srgb, var(--p-bad) 15%, transparent);
   padding: 3px 6px; border-radius: 4px;
 }
 .perf-funil-bar {
@@ -420,7 +436,7 @@
 .perf-saldo--aviso { border-color: var(--p-warn); }
 .perf-saldo--critico {
   border-color: var(--p-bad);
-  background: linear-gradient(135deg, rgba(247,113,113,.06), var(--p-card));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--p-bad) 6%, transparent), var(--p-card));
 }
 .perf-saldo-head { margin-bottom: 14px; }
 .perf-saldo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -461,9 +477,9 @@
   padding: 11px 14px; border: 1px solid var(--p-line);
   border-radius: 10px; background: var(--p-card2);
 }
-.perf-sugestao--escalar { border-color: var(--p-ok); background: rgba(94,122,79,.08); }
-.perf-sugestao--pausar { border-color: var(--p-bad); background: rgba(247,113,113,.08); }
-.perf-sugestao--renovar { border-color: var(--p-warn); background: rgba(251,191,36,.06); }
+.perf-sugestao--escalar { border-color: var(--p-ok); background: color-mix(in srgb, var(--p-ok) 8%, transparent); }
+.perf-sugestao--pausar { border-color: var(--p-bad); background: color-mix(in srgb, var(--p-bad) 8%, transparent); }
+.perf-sugestao--renovar { border-color: var(--p-warn); background: color-mix(in srgb, var(--p-warn) 6%, transparent); }
 .perf-sugestao-acao {
   font: 800 10.5px/1 var(--p-font-body); letter-spacing: .14em;
   padding: 6px 10px; border-radius: 5px;
@@ -505,7 +521,7 @@
   padding: 4px 7px; border-radius: 4px;
   background: rgba(255,255,255,.04); color: var(--p-muted); white-space: nowrap;
 }
-.perf-camp-status--active { background: rgba(94,122,79,.18); color: var(--p-ok); }
+.perf-camp-status--active { background: color-mix(in srgb, var(--p-ok) 18%, transparent); color: var(--p-ok); }
 .perf-camp-status--paused { background: rgba(255,255,255,.04); color: var(--p-faint); }
 .perf-camp-roas { font-weight: 700; font-size: 12.5px; }
 @media (max-width: 800px) {
@@ -731,13 +747,13 @@
 .perf-act-btn:hover:not(:disabled) { transform: translateY(-1px); }
 .perf-act-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .perf-act-btn--pause:hover:not(:disabled) {
-  background: rgba(204,122,77,.18); border-color: var(--p-warn); color: var(--p-warn);
+  background: color-mix(in srgb, var(--p-warn) 18%, transparent); border-color: var(--p-warn); color: var(--p-warn);
 }
 .perf-act-btn--resume:hover:not(:disabled) {
-  background: rgba(94,122,79,.18); border-color: var(--p-ok); color: var(--p-ok);
+  background: color-mix(in srgb, var(--p-ok) 18%, transparent); border-color: var(--p-ok); color: var(--p-ok);
 }
 .perf-act-btn--up:hover:not(:disabled) {
-  background: rgba(94,122,79,.18); border-color: var(--p-ok); color: var(--p-ok);
+  background: color-mix(in srgb, var(--p-ok) 18%, transparent); border-color: var(--p-ok); color: var(--p-ok);
 }
 
 /* Modal de confirmação */
@@ -969,7 +985,7 @@
   color: var(--p-ink);
 }
 .perf-audit-row--ok { border-left-color: var(--p-ok); }
-.perf-audit-row--bad { border-left-color: var(--p-bad); background: rgba(247,113,113,.04); }
+.perf-audit-row--bad { border-left-color: var(--p-bad); background: color-mix(in srgb, var(--p-bad) 4%, transparent); }
 .perf-audit-icon {
   font-size: 16px; text-align: center;
 }
@@ -1021,7 +1037,7 @@
 }
 .perf-ad-card--clickable:focus-visible {
   border-color: var(--p-accent);
-  box-shadow: 0 0 0 3px rgba(204,170,90,.28);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-accent) 28%, transparent);
 }
 .perf-ad-fav-wrap {
   position: absolute; top: 0; left: 0;
@@ -1050,8 +1066,8 @@
   border-radius: 999px;
   background: rgba(255,255,255,.06);
 }
-.criativo-dd-status--ok { color: var(--p-ok); background: rgba(94,122,79,.18); }
-.criativo-dd-status--warn { color: var(--p-warn); background: rgba(204,122,77,.18); }
+.criativo-dd-status--ok { color: var(--p-ok); background: color-mix(in srgb, var(--p-ok) 18%, transparent); }
+.criativo-dd-status--warn { color: var(--p-warn); background: color-mix(in srgb, var(--p-warn) 18%, transparent); }
 .criativo-dd-status--neutral { color: var(--p-muted); }
 
 /* Body */
@@ -1098,7 +1114,7 @@
   background: var(--p-card);
   transition: background 160ms ease;
 }
-.criativo-dd-ig-link:hover { background: rgba(204,170,90,.12); }
+.criativo-dd-ig-link:hover { background: color-mix(in srgb, var(--p-accent) 12%, transparent); }
 
 /* Copy */
 .criativo-dd-copy {
@@ -1285,7 +1301,7 @@
   position: absolute; inset: 50% 0 auto 0;
   transform: translateY(-50%);
   height: 18px;
-  background: rgba(204,170,90,.16);
+  background: color-mix(in srgb, var(--p-accent) 16%, transparent);
   border-radius: 4px;
 }
 
@@ -1360,18 +1376,18 @@
 }
 .criativo-dd-action--warn {
   color: var(--p-warn);
-  border-color: rgba(204,122,77,.5);
+  border-color: color-mix(in srgb, var(--p-warn) 50%, transparent);
 }
 .criativo-dd-action--warn:hover:not(:disabled) {
-  background: rgba(204,122,77,.12);
+  background: color-mix(in srgb, var(--p-warn) 12%, transparent);
   border-color: var(--p-warn);
 }
 .criativo-dd-action--ok {
   color: var(--p-ok);
-  border-color: rgba(94,122,79,.5);
+  border-color: color-mix(in srgb, var(--p-ok) 50%, transparent);
 }
 .criativo-dd-action--ok:hover:not(:disabled) {
-  background: rgba(94,122,79,.12);
+  background: color-mix(in srgb, var(--p-ok) 12%, transparent);
   border-color: var(--p-ok);
 }
 
@@ -1400,4 +1416,190 @@
   .criativo-dd-action {
     flex: 1 1 100%;
   }
+}
+
+/* ============================================================
+   MOBILE — responsividade <=640px (iframe no celular do cliente)
+   1) 3 tabelas → cards empilhados   2) touch targets 44px
+   3) toolbar não-sticky + tabs scroll-x   4) padding reduzido
+   ============================================================ */
+
+/* ---------- (3) TOOLBAR mobile: solta o sticky e vira faixa scroll-x ---------- */
+@media (max-width: 560px) {
+  .perf-toolbar {
+    position: static; top: auto; z-index: auto;
+    flex-direction: column; align-items: stretch; gap: 10px;
+    padding: 10px;
+  }
+  .perf-tabs {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .perf-tabs::-webkit-scrollbar { display: none; }
+  .perf-tabs > * { flex: 0 0 auto; scroll-snap-align: start; }
+  .perf-toolbar-right { width: 100%; justify-content: space-between; gap: 8px; }
+  .perf-period {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .perf-period::-webkit-scrollbar { display: none; }
+  .perf-period > * { flex: 0 0 auto; }
+}
+
+/* ---------- (1) TABELAS → CARDS empilhados (<=560px) ---------- */
+@media (max-width: 560px) {
+
+  /* esconde os cabeçalhos de coluna — labels vêm dos ::before */
+  .perf-camp-row--head,
+  .perf-comp-row--head,
+  .perf-bd-row--head { display: none !important; }
+
+  /* ===== CAMPANHAS (Pareto) ===== */
+  .perf-camp-row,
+  .perf-camp-row--clickable {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    gap: 6px 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--p-line);
+    border-top: 1px solid var(--p-line);
+    border-radius: 12px;
+    background: var(--p-card2);
+  }
+  .perf-camp-row .perf-camp-name {
+    grid-column: 1 / -1;
+    white-space: normal;
+    font: 700 14px/1.3 var(--p-font-body);
+    color: var(--p-ink);
+  }
+  /* status logo abaixo do nome, alinhado à esquerda */
+  .perf-camp-row > .ta-c:nth-child(2) {
+    grid-column: 1 / -1; text-align: left;
+  }
+  /* Gasto / CPA / Freq / ROAS: rotulados via ::before */
+  .perf-camp-row > .ta-r {
+    display: flex; align-items: baseline; justify-content: space-between;
+    text-align: right;
+    padding: 2px 0;
+  }
+  .perf-camp-row > .ta-r::before {
+    font: 700 9.5px/1 var(--p-font-body);
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--p-muted);
+  }
+  .perf-camp-row > *:nth-child(3)::before { content: 'Gasto'; }
+  .perf-camp-row > *:nth-child(4)::before { content: 'CPA'; }
+  .perf-camp-row > *:nth-child(5)::before { content: 'Freq'; }
+  .perf-camp-row > *:nth-child(6)::before { content: 'ROAS'; }
+  /* Ações: full-width no rodapé do card */
+  .perf-camp-row .perf-camp-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+    margin-top: 4px;
+  }
+  .perf-camp-row .perf-camp-actions .perf-act-btn { flex: 1; }
+
+  /* ===== COMPARATIVO MENSAL ===== */
+  .perf-comp-row {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--p-line);
+    border-top: 1px solid var(--p-line);
+    border-radius: 12px;
+    background: var(--p-card2);
+  }
+  .perf-comp-row > *:nth-child(5),
+  .perf-comp-row > *:nth-child(6),
+  .perf-comp-row > *:nth-child(7) { display: flex !important; }
+  .perf-comp-row .perf-comp-mes {
+    font: 700 14px/1.2 var(--p-font-body);
+    margin-bottom: 2px;
+  }
+  .perf-comp-row > .ta-r {
+    display: flex; align-items: baseline; justify-content: space-between;
+    text-align: right; padding: 2px 0;
+  }
+  .perf-comp-row > .ta-r::before {
+    font: 700 9.5px/1 var(--p-font-body);
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--p-muted);
+  }
+  .perf-comp-row > *:nth-child(2)::before { content: 'Faturamento'; }
+  .perf-comp-row > *:nth-child(3)::before { content: 'Investido'; }
+  .perf-comp-row > *:nth-child(4)::before { content: 'Compras'; }
+  .perf-comp-row > *:nth-child(5)::before { content: 'ROAS'; }
+  .perf-comp-row > *:nth-child(6)::before { content: 'Lucro pós-ads'; }
+  .perf-comp-row > *:nth-child(7)::before { content: 'Δ vs anterior'; }
+
+  /* ===== BREAKDOWNS ===== */
+  .perf-bd-row {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--p-line);
+    border-top: 1px solid var(--p-line);
+    border-radius: 12px;
+    background: var(--p-card2);
+  }
+  .perf-bd-row .perf-bd-dim {
+    font: 700 14px/1.3 var(--p-font-body);
+    color: var(--p-ink);
+  }
+  /* a barra ocupa largura toda como faixa visual */
+  .perf-bd-row .perf-bd-bar { width: 100%; margin: 2px 0; }
+  .perf-bd-row > .ta-r {
+    display: flex; align-items: baseline; justify-content: space-between;
+    text-align: right; padding: 2px 0;
+  }
+  .perf-bd-row > .ta-r::before {
+    font: 700 9.5px/1 var(--p-font-body);
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--p-muted);
+  }
+  .perf-bd-row > *:nth-child(2)::before { content: 'Gasto'; }
+  .perf-bd-row > *:nth-child(4)::before { content: 'Compras'; }
+  .perf-bd-row > *:nth-child(5)::before { content: 'ROAS'; }
+}
+
+/* ---------- (2) TOUCH TARGETS 44px (<=640px) ---------- */
+@media (max-width: 640px) {
+  .perf-icon-btn {
+    width: 44px; height: 44px;
+    font-size: 17px;
+  }
+  .perf-period-btn {
+    min-height: 44px; padding: 10px 14px;
+  }
+  .perf-tab {
+    min-height: 44px; padding: 12px 16px;
+  }
+  .perf-act-btn {
+    min-height: 44px; min-width: 44px; padding: 10px 12px;
+  }
+  .perf-drill-close {
+    width: 44px; height: 44px; font-size: 18px;
+  }
+}
+
+/* ---------- (4) PADDING reduzido dos blocos (<=480px) ---------- */
+@media (max-width: 480px) {
+  .perf {
+    padding: 14px 14px;
+  }
+  .perf-block { padding: 14px; }
+  .perf-hero { padding: 14px; }
+  .perf-funil { padding: 14px; }
+  .perf-saldo { padding: 14px; }
 }

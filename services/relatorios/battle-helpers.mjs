@@ -35,11 +35,11 @@ function sendErr(res, status, error, extra = {}) {
 // ──────────────────────────────────────────────────────────────────────────────
 // Validação de ator via Supabase
 //
-// Espera tabela `fenice_users` com colunas:
-//   - auth_id (uuid), email, slug (nullable se admin global), role
+// Espera tabela `usuarios` com colunas:
+//   - auth_id (uuid), email, cliente_slug (nullable se admin global), role
 //
 // `requiredRole` opcional. Se passado, força ator a ter essa role.
-// Se `slug` passado, ator precisa ter slug=igual OU role='admin_fenice'.
+// Se `slug` passado, ator precisa ter cliente_slug=igual OU role='admin_fenice'.
 // ──────────────────────────────────────────────────────────────────────────────
 async function validateActor(supabase, authId, slug, requiredRole) {
   if (!supabase) return { ok: false, status: 500, error: 'supabase_indisponivel' };
@@ -47,8 +47,8 @@ async function validateActor(supabase, authId, slug, requiredRole) {
 
   try {
     const { data, error } = await supabase
-      .from('fenice_users')
-      .select('auth_id,email,slug,role')
+      .from('usuarios')
+      .select('auth_id,email,cliente_slug,role')
       .eq('auth_id', authId)
       .limit(1);
 
@@ -67,7 +67,7 @@ async function validateActor(supabase, authId, slug, requiredRole) {
       return { ok: false, status: 403, error: 'sem_permissao', detail: `requer ${requiredRole}` };
     }
 
-    if (slug && !isAdmin && user.slug !== slug) {
+    if (slug && !isAdmin && user.cliente_slug !== slug) {
       return { ok: false, status: 403, error: 'sem_acesso_ao_slug', detail: slug };
     }
 

@@ -910,3 +910,23 @@
   .wiz-step-title { font-size: 19px; }
   .wiz-budget-value { font-size: 36px; }
 }
+
+/* ---------- TOUCH TARGETS mobile (44px / alvos confortáveis) ---------- */
+@media (max-width: 640px) {
+  .criar-modal-x {
+    width: 44px; height: 44px; font-size: 18px;
+  }
+  .criar-wiz-close {
+    width: 44px; height: 44px; font-size: 22px;
+  }
+  .criar-progress-dot {
+    width: 40px; height: 40px; font-size: 13px;
+  }
+  .wiz-slider { height: 8px; }
+  .wiz-slider::-webkit-slider-thumb {
+    width: 28px; height: 28px;
+  }
+  .wiz-slider::-moz-range-thumb {
+    width: 28px; height: 28px;
+  }
+}

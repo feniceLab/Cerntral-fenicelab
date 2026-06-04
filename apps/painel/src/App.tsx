@@ -6,6 +6,7 @@ import { Clientes } from './screens/Clientes';
 import { Reposicoes } from './screens/Reposicoes';
 import { Relatorios } from './screens/Relatorios';
 import { Performance } from './screens/Performance';
+import { PortalEmbed } from './screens/PortalEmbed';
 import { AuditCentral } from './screens/AuditCentral';
 import { CriarCampanha } from './screens/CriarCampanha';
 import { AprovarCampanhas } from './screens/AprovarCampanhas';
@@ -166,7 +167,7 @@ function AdminShell() {
             </svg>
           </button>
           {portalCliente ? (
-            <Performance cliente={portalCliente} onBack={() => setPortalCliente(null)} />
+            <PortalEmbed cliente={portalCliente} onBack={() => setPortalCliente(null)} />
           ) : view === 'clientes' ? (
             <Clientes onOpen={setPortalCliente} />
           ) : view === 'audit_central' ? (

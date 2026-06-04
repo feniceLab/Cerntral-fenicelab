@@ -36,6 +36,8 @@ interface Props {
   until?: string;
   /** Identificador do usuário pra audit log no drilldown. */
   actor?: string;
+  /** auth.users.id — favoritos persistem no Supabase quando presente. */
+  authId?: string;
 }
 
 interface OpenAdState {
@@ -43,7 +45,7 @@ interface OpenAdState {
   ad_name: string;
 }
 
-export function Criativos({ slug, preset, since, until, actor }: Props) {
+export function Criativos({ slug, preset, since, until, actor, authId }: Props) {
   const [ads, setAds] = useState<AdRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -88,7 +90,7 @@ export function Criativos({ slug, preset, since, until, actor }: Props) {
       </div>
       <div className="perf-criativos-grid">
         {top.map((a) => (
-          <AdCard key={a.ad_id} ad={a} tone="ok" slug={slug} onOpen={openCriativo} />
+          <AdCard key={a.ad_id} ad={a} tone="ok" slug={slug} onOpen={openCriativo} authId={authId} />
         ))}
       </div>
 
@@ -102,7 +104,7 @@ export function Criativos({ slug, preset, since, until, actor }: Props) {
           </div>
           <div className="perf-criativos-grid">
             {worst.map((a) => (
-              <AdCard key={a.ad_id} ad={a} tone="bad" slug={slug} onOpen={openCriativo} />
+              <AdCard key={a.ad_id} ad={a} tone="bad" slug={slug} onOpen={openCriativo} authId={authId} />
             ))}
           </div>
         </>
@@ -127,11 +129,13 @@ function AdCard({
   tone,
   slug,
   onOpen,
+  authId,
 }: {
   ad: AdRow;
   tone: 'ok' | 'bad';
   slug: string;
   onOpen: (ad: AdRow) => void;
+  authId?: string;
 }) {
   // Imagem HD tem prioridade (backend novo) com fallback pra thumbnail (atual).
   const imgSrc = ad.image_url_hd || ad.thumbnail_url;
@@ -165,7 +169,7 @@ function AdCard({
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
-          <FavoritoStar slug={slug} adId={ad.ad_id} className="is-overlay" />
+          <FavoritoStar slug={slug} adId={ad.ad_id} className="is-overlay" authId={authId} />
         </span>
         <div className={`perf-ad-roas perf-ad-roas--${tone}`}>{fmtRoas(ad.roas)}</div>
       </div>

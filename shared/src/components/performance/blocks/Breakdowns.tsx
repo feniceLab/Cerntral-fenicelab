@@ -19,7 +19,7 @@ const API_BASE = (import.meta as any).env?.VITE_TRAFEGO_URL || '';
 const TABS: { key: string; label: string; breakdowns: string; dimKeys: string[]; dimLabel: string }[] = [
   { key: 'age', label: 'Idade & Gênero', breakdowns: 'age,gender', dimKeys: ['age', 'gender'], dimLabel: 'Grupo' },
   { key: 'placement', label: 'Onde apareceu', breakdowns: 'publisher_platform', dimKeys: ['publisher_platform'], dimLabel: 'Plataforma' },
-  { key: 'dow', label: 'Dia da semana', breakdowns: 'dma', dimKeys: ['dma'], dimLabel: 'Região (DMA)' },
+  { key: 'dma', label: 'Região', breakdowns: 'dma', dimKeys: ['dma'], dimLabel: 'Região (DMA)' },
   { key: 'country', label: 'País', breakdowns: 'country', dimKeys: ['country'], dimLabel: 'País' },
 ];
 

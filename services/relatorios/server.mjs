@@ -105,6 +105,71 @@ if (!supabase) {
   console.warn('⚠️  SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausentes — Wizard/Battle desabilitados');
 }
 
+// === RBAC ===
+// Rotas de AÇÃO (POST /api/campaign/action) SEMPRE exigem ator autenticado.
+// Rotas de LEITURA (GET insights/saldo/...) são "graceful": quando STRICT_READ_RBAC
+// for false (default), leitura sem auth é apenas logada (warn) mas PERMITIDA — assim
+// o iframe público da Arena continua funcionando. Quando true, leitura exige ator
+// válido e slug compatível.
+const STRICT_READ_RBAC = false;
+
+// Resolve o ator a partir do JWT no header Authorization: Bearer <token>.
+// Valida o token com supabase.auth.getUser e busca role/cliente_slug em `usuarios`.
+// Retorna { authId, role, clienteSlug } ou null.
+async function getActorFromJwt(req) {
+  if (!supabase) return null;
+  const header = req.headers['authorization'] || req.headers['Authorization'] || '';
+  if (!header.startsWith('Bearer ')) return null;
+  const token = header.slice(7).trim();
+  if (!token) return null;
+  try {
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !userData?.user?.id) return null;
+    const authId = userData.user.id;
+    const { data: rows, error: rowErr } = await supabase
+      .from('usuarios')
+      .select('auth_id,role,cliente_slug')
+      .eq('auth_id', authId)
+      .limit(1);
+    if (rowErr || !rows || rows.length === 0) return null;
+    return { authId, role: rows[0].role, clienteSlug: rows[0].cliente_slug };
+  } catch (e) {
+    console.warn('[rbac] getActorFromJwt falhou:', e.message);
+    return null;
+  }
+}
+
+// Guard de LEITURA. Quando STRICT_READ_RBAC=false: loga warn se não houver token e
+// PERMITE (retorna true). Quando true: exige ator e valida slug (se houver), enviando
+// 401/403 e retornando false pra abortar a rota.
+async function guardRead(req, res, slug) {
+  if (!STRICT_READ_RBAC) {
+    const header = req.headers['authorization'] || req.headers['Authorization'] || '';
+    if (!header.startsWith('Bearer ')) {
+      console.warn('[rbac] leitura sem auth: ' + req.url);
+    }
+    return true;
+  }
+  const actor = await getActorFromJwt(req);
+  const headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-cache',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+  if (!actor) {
+    res.writeHead(401, headers);
+    res.end(JSON.stringify({ ok: false, error: 'auth_required' }, null, 2));
+    return false;
+  }
+  if (slug && actor.role !== 'admin_fenice' && actor.clienteSlug !== slug) {
+    res.writeHead(403, headers);
+    res.end(JSON.stringify({ ok: false, error: 'sem_acesso_ao_slug' }, null, 2));
+    return false;
+  }
+  return true;
+}
+
 // Helpers compartilhados pra handlers wizard + battle
 async function readJson(req) {
   let body = '';
@@ -1108,21 +1173,28 @@ async function notifyBotIfCritical(entry) {
   }
 }
 
-async function logAuditEntry(entry) {
-  try {
-    await rotateAuditLogIfNeeded();
-    const enriched = {
-      ts: new Date().toISOString(),
-      actor: entry?.actor || null,
-      ...entry,
-    };
-    const line = JSON.stringify(enriched) + '\n';
-    await fs.appendFile(AUDIT_LOG_PATH, line, 'utf-8');
-    // Dispara alerta no bot do cliente (best effort, não bloqueia)
-    notifyBotIfCritical(enriched).catch(() => {});
-  } catch (e) {
-    console.warn('audit log append failed:', e.message);
-  }
+// Serializa escritas no audit log: cada entrada é encadeada na anterior pra evitar
+// corrupção por fs.appendFile concorrente (sem lock).
+let auditChain = Promise.resolve();
+
+async function writeAuditEntry(entry) {
+  await rotateAuditLogIfNeeded();
+  const enriched = {
+    ts: new Date().toISOString(),
+    actor: entry?.actor || null,
+    ...entry,
+  };
+  const line = JSON.stringify(enriched) + '\n';
+  await fs.appendFile(AUDIT_LOG_PATH, line, 'utf-8');
+  // Dispara alerta no bot do cliente (best effort, não bloqueia)
+  notifyBotIfCritical(enriched).catch(() => {});
+}
+
+function logAuditEntry(entry) {
+  auditChain = auditChain
+    .then(() => writeAuditEntry(entry))
+    .catch((e) => { console.warn('audit log append failed:', e.message); });
+  return auditChain;
 }
 
 async function readAuditLog({ slug, entity_type, limit = 50, since } = {}) {
@@ -1313,6 +1385,8 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.url === '/api/saldo' || req.url.startsWith('/api/saldo?')) {
+      const u = new URL(req.url, 'http://x');
+      if (!(await guardRead(req, res, u.searchParams.get('slug') || null))) return;
       const force = req.url.includes('force=1');
       if (force) saldoCache = { data: null, ts: 0 };
       const data = await fetchSaldos();
@@ -1327,6 +1401,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.url === '/api/insights' || req.url.startsWith('/api/insights?')) {
       const u = new URL(req.url, 'http://x');
+      if (!(await guardRead(req, res, u.searchParams.get('slug') || null))) return;
       if (u.searchParams.get('force') === '1') insightsCache = {};
       const data = await fetchInsights({
         since: u.searchParams.get('since') || undefined,
@@ -1344,6 +1419,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.url.startsWith('/api/timeseries')) {
       const u = new URL(req.url, 'http://x');
+      if (!(await guardRead(req, res, u.searchParams.get('slug') || null))) return;
       const data = await fetchTimeseries({
         slug: u.searchParams.get('slug') || undefined,
         since: u.searchParams.get('since') || undefined,
@@ -1357,6 +1433,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.url.startsWith('/api/campaigns')) {
       const u = new URL(req.url, 'http://x');
+      if (!(await guardRead(req, res, u.searchParams.get('slug') || null))) return;
       const data = await fetchCampaigns({
         slug: u.searchParams.get('slug') || undefined,
         since: u.searchParams.get('since') || undefined,
@@ -1370,6 +1447,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.url.startsWith('/api/ads')) {
       const u = new URL(req.url, 'http://x');
+      if (!(await guardRead(req, res, u.searchParams.get('slug') || null))) return;
       const data = await fetchAds({
         slug: u.searchParams.get('slug') || undefined,
         since: u.searchParams.get('since') || undefined,
@@ -1387,14 +1465,45 @@ const server = http.createServer(async (req, res) => {
       for await (const chunk of req) body += chunk;
       let payload = {};
       try { payload = JSON.parse(body); } catch {}
-      const result = await postCampaignAction(payload, req.headers);
-      res.writeHead(result.ok ? 200 : 400, {
+
+      const actionHeaders = {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-cache',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      });
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      };
+
+      // === RBAC server-side (obrigatório) ===
+      const actor = await getActorFromJwt(req);
+      if (!actor) {
+        res.writeHead(401, actionHeaders);
+        res.end(JSON.stringify({ ok: false, error: 'auth_required' }, null, 2));
+        return;
+      }
+      const action = payload?.action || null;
+      const bodySlug = payload?.slug || null;
+      const isAdmin = actor.role === 'admin_fenice';
+
+      if (action === 'budget_up' || action === 'budget_down') {
+        // Escalada de budget: SÓ admin_fenice.
+        if (!isAdmin) {
+          res.writeHead(403, actionHeaders);
+          res.end(JSON.stringify({ ok: false, error: 'escalada_requer_admin' }, null, 2));
+          return;
+        }
+      } else if (action === 'pause' || action === 'resume') {
+        // admin_fenice OU cliente dono do slug.
+        const allowed = isAdmin || (actor.role === 'cliente' && bodySlug && bodySlug === actor.clienteSlug);
+        if (!allowed) {
+          res.writeHead(403, actionHeaders);
+          res.end(JSON.stringify({ ok: false, error: 'sem_acesso_ao_slug' }, null, 2));
+          return;
+        }
+      }
+
+      const result = await postCampaignAction(payload, req.headers);
+      res.writeHead(result.ok ? 200 : 400, actionHeaders);
       res.end(JSON.stringify(result, null, 2));
       return;
     }
@@ -1402,7 +1511,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(204, {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       });
       res.end();
       return;
@@ -1428,6 +1537,8 @@ const server = http.createServer(async (req, res) => {
     // === CRIATIVOS HD (auto) — endpoint /api/ad-detail ===
     if (req.url.startsWith('/api/ad-detail')) {
       const u = new URL(req.url, 'http://x');
+      // Guard de RBAC no ROTEADOR (criativos-hd.mjs não é tocado).
+      if (!(await guardRead(req, res, u.searchParams.get('slug') || null))) return;
       await handleAdDetail(req, res, u.searchParams);
       return;
     }
@@ -1527,6 +1638,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.url.startsWith('/api/breakdown')) {
       const u = new URL(req.url, 'http://x');
+      if (!(await guardRead(req, res, u.searchParams.get('slug') || null))) return;
       const data = await fetchBreakdown({
         slug: u.searchParams.get('slug') || undefined,
         breakdowns: u.searchParams.get('breakdowns') || undefined,

@@ -13,6 +13,8 @@ interface Props {
   size?: number;
   /** Classe extra (ex: 'is-overlay' pra estrela sobre thumbnail). */
   className?: string;
+  /** auth.users.id — quando presente, favoritos persistem no Supabase. */
+  authId?: string;
 }
 
 const STYLES_ID = 'fenice-perf-fav-btn-styles';
@@ -20,7 +22,7 @@ const STYLES_CSS = `
 .perf-fav-btn {
   background: rgba(0,0,0,.5);
   border: 1px solid var(--p-line, rgba(255,255,255,.15));
-  color: #ffd166;
+  color: var(--p-warn);
   cursor: pointer;
   padding: 5px 8px;
   border-radius: 6px;
@@ -34,7 +36,7 @@ const STYLES_CSS = `
   justify-content: center;
 }
 .perf-fav-btn:hover { transform: scale(1.08); }
-.perf-fav-btn.is-on { background: rgba(255,209,102,.18); color: #ffd166; }
+.perf-fav-btn.is-on { background: color-mix(in srgb, var(--p-warn) 18%, transparent); color: var(--p-warn); }
 .perf-fav-btn.is-overlay { position: absolute; top: 8px; left: 8px; z-index: 2; }
 `;
 
@@ -47,10 +49,10 @@ function ensureStyles(): void {
   document.head.appendChild(style);
 }
 
-export function FavoritoStar({ slug, adId, size = 18, className }: Props) {
+export function FavoritoStar({ slug, adId, size = 18, className, authId }: Props) {
   if (typeof document !== 'undefined') ensureStyles();
 
-  const { isFav, toggleFav } = useFavoritos(slug);
+  const { isFav, toggleFav } = useFavoritos(slug, authId);
   const active = isFav(adId);
 
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {

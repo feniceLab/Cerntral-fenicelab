@@ -34,6 +34,15 @@ interface AdRow {
 interface Props {
   slug: string;
   preset?: string;
+  /**
+   * Id do usuário autenticado (auth.users.id). Se presente, os favoritos
+   * são persistidos no Supabase por usuário; senão, caem no localStorage.
+   *
+   * TODO(wiring): o WarRoomShell tem `userAuthId` mas ainda não repassa para
+   * Criativos → FavoritosCriativos. Outro agente deve encadear essa prop
+   * (WarRoomShell → Criativos → FavoritosCriativos) pra ativar o modo Supabase.
+   */
+  authId?: string;
 }
 
 const API_BASE = (import.meta as any).env?.VITE_TRAFEGO_URL || '';
@@ -170,10 +179,10 @@ function ensureStyles(): void {
   document.head.appendChild(style);
 }
 
-export function FavoritosCriativos({ slug, preset = 'last_month' }: Props) {
+export function FavoritosCriativos({ slug, preset = 'last_month', authId }: Props) {
   if (typeof document !== 'undefined') ensureStyles();
 
-  const { favoritos, toggleFav } = useFavoritos(slug);
+  const { favoritos, toggleFav } = useFavoritos(slug, authId);
   const [ads, setAds] = useState<AdRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [err, setErr] = useState<string | null>(null);

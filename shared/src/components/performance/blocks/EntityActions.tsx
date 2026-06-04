@@ -2,6 +2,7 @@
 // Backend: POST /api/campaign/action com { slug, entity_type, entity_id, action }.
 // Reusa estilos .perf-modal-overlay/.perf-modal/.perf-toast/.perf-act-btn já em performance.css.
 import { useState } from 'react';
+import { supabase } from '../../../lib/supabase';
 
 const API_BASE = (import.meta as any).env?.VITE_TRAFEGO_URL || '';
 
@@ -61,9 +62,13 @@ export function useEntityActions(slug: string, actor?: string) {
   ): Promise<{ ok: boolean; error?: string }> => {
     setPending(entity_id);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const r = await fetch(`${API_BASE}/api/campaign/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ slug, entity_type, entity_id, action, entity_name, actor }),
       });
       const j = await r.json();
