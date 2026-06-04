@@ -5,11 +5,11 @@ import { PERIODO, METRICS, carteira, plantao, type TPMetrics, type Nivel, type D
 const brl = (n: number) => 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const brl0 = (n: number) => 'R$ ' + n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 
-const DOT: Record<Nivel, string> = { verde: '#3c8a3c', amarelo: '#C8742B', vermelho: '#B23A2E' };
+const DOT: Record<Nivel, string> = { verde: 'var(--fen-success)', amarelo: 'var(--fen-cotta)', vermelho: 'var(--fen-terra)' };
 const DEC: Record<Decisao, [string, string, string]> = {
-  SCALE: ['Escalar', 'var(--fen-success-bg)', '#3c5232'],
-  HOLD: ['Manter', 'var(--fen-warning-bg)', '#7a4520'],
-  KILL: ['Corrigir', 'rgba(178,58,46,.14)', '#B23A2E'],
+  SCALE: ['Escalar', 'var(--fen-success-bg)', 'var(--fen-success)'],
+  HOLD: ['Manter', 'var(--fen-warning-bg)', 'var(--fen-cotta-d)'],
+  KILL: ['Corrigir', 'var(--fen-danger-bg)', 'var(--fen-terra)'],
 };
 const ESTADO_LABEL: Record<string, string> = {
   'sem-dados': 'Sem dados no período',
@@ -20,7 +20,7 @@ const ESTADO_LABEL: Record<string, string> = {
 function Kpi({ valor, label, cor, hero }: { valor: string; label: string; cor?: string; hero?: boolean }) {
   return (
     <Card pad={16}>
-      <div style={{ font: `700 ${hero ? 30 : 24}px/1 var(--fen-font)`, color: cor ?? 'var(--fen-ink, #2A211C)' }}>{valor}</div>
+      <div style={{ font: `700 ${hero ? 30 : 24}px/1 var(--fen-font)`, color: cor ?? 'var(--fen-caffe)' }}>{valor}</div>
       <div style={{ marginTop: 6, font: '600 11px/1.2 var(--fen-font)', letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--fen-muted)' }}>{label}</div>
     </Card>
   );
@@ -66,7 +66,7 @@ function ClienteCard({ c }: { c: TPMetrics }) {
     );
   }
   const [decLabel, decBg, decColor] = DEC[c.decisao];
-  const lucroCor = c.lucroPosAds >= 0 ? '#3c8a3c' : '#B23A2E';
+  const lucroCor = c.lucroPosAds >= 0 ? 'var(--fen-success)' : 'var(--fen-terra)';
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
@@ -93,7 +93,7 @@ function ClienteCard({ c }: { c: TPMetrics }) {
         <Mini label="Freq" valor={c.frequencia.toFixed(2)} alerta={c.saturando} />
       </div>
       {c.saturando && (
-        <div style={{ marginTop: 8, font: '500 11px/1.3 var(--fen-font)', color: '#7a4520' }}>⚠ Público saturando — renovar criativo.</div>
+        <div style={{ marginTop: 8, font: '500 11px/1.3 var(--fen-font)', color: 'var(--fen-cotta-d)' }}>⚠ Público saturando — renovar criativo.</div>
       )}
     </Card>
   );
@@ -103,7 +103,7 @@ function Mini({ label, valor, alerta }: { label: string; valor: string; alerta?:
   return (
     <div style={{ background: alerta ? 'var(--fen-warning-bg)' : 'rgba(154,140,122,.10)', borderRadius: 8, padding: '8px 10px' }}>
       <div style={{ font: '600 9px/1 var(--fen-font)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--fen-muted)' }}>{label}</div>
-      <div style={{ marginTop: 3, font: '700 13px/1 var(--fen-font)', color: alerta ? '#7a4520' : 'var(--fen-ink, #2A211C)' }}>{valor}</div>
+      <div style={{ marginTop: 3, font: '700 13px/1 var(--fen-font)', color: alerta ? 'var(--fen-cotta-d)' : 'var(--fen-caffe)' }}>{valor}</div>
     </div>
   );
 }
@@ -117,10 +117,10 @@ export function Dashboard() {
         <Plantao />
 
         <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
-          <Kpi valor={`+${brl0(ct.lucro)}`} label="Lucro pós-ads (carteira)" cor="#3c8a3c" hero />
+          <Kpi valor={`+${brl0(ct.lucro)}`} label="Lucro pós-ads (carteira)" cor="var(--fen-success)" hero />
           <Kpi valor={brl0(ct.fat)} label="Faturamento" />
           <Kpi valor={brl0(ct.inv)} label="Investido" />
-          <Kpi valor={`${ct.roasPond.toFixed(1)}×`} label="ROAS ponderado" cor="#B23A2E" />
+          <Kpi valor={`${ct.roasPond.toFixed(1)}×`} label="ROAS ponderado" cor="var(--fen-terra)" />
           <Kpi valor={`${ct.verdes}/${ct.comDados}`} label="Clientes saudáveis" />
         </div>
 

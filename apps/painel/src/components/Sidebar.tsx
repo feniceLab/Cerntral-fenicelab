@@ -34,11 +34,14 @@ const GROUPS: NavGroup[] = [
 export interface SidebarProps {
   view: NavKey;
   go: (key: NavKey) => void;
+  collapsed?: boolean;
+  mobileOpen?: boolean;
+  onToggle?: () => void;
 }
 
-export function Sidebar({ view, go }: SidebarProps) {
+export function Sidebar({ view, go, collapsed = false, mobileOpen = false, onToggle }: SidebarProps) {
   return (
-    <nav className="fen-pn-side">
+    <nav className={`fen-pn-side${collapsed ? ' is-collapsed' : ''}${mobileOpen ? ' is-open' : ''}`}>
       <div className="fen-pn-side__brand">
         <img src={SELO_TERRA} width={30} height={30} alt="" />
         <div>
@@ -47,6 +50,19 @@ export function Sidebar({ view, go }: SidebarProps) {
           </div>
           <div className="fen-pn-side__tag">PAINEL</div>
         </div>
+        {onToggle && (
+          <button
+            type="button"
+            className="fen-pn-side__close"
+            onClick={onToggle}
+            aria-label="Recolher menu"
+            title="Recolher menu"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {GROUPS.map((group) => (
@@ -61,6 +77,8 @@ export function Sidebar({ view, go }: SidebarProps) {
                   type="button"
                   className={`fen-pn-side__item${on ? ' is-on' : ''}`}
                   onClick={() => go(item.key)}
+                  title={collapsed ? item.label : undefined}
+                  aria-label={item.label}
                 >
                   <PnIcon
                     name={item.icon}

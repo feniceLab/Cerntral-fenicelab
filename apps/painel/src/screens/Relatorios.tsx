@@ -34,16 +34,16 @@ export function Relatorios() {
   const comprasTotal = comDados.reduce((s, l) => s + (l.compras || 0), 0);
   const roas = invTotal ? fatTotal / invTotal : 0;
   const nome = (slug: string) => CLIENTES_FENICE.find((c) => c.slug === slug)?.nome ?? slug;
-  const cor = (slug: string) => CLIENTES_FENICE.find((c) => c.slug === slug)?.cor ?? '#9a8c7a';
+  const cor = (slug: string) => CLIENTES_FENICE.find((c) => c.slug === slug)?.cor ?? 'var(--fen-muted)';
 
   return (
     <>
       <Topbar kicker="Consolidado da agência · Maio 2026" title="Relatórios da Empresa" />
       <Scroll>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
-          <Kpi valor={brl0(fatTotal)} label="Faturamento rastreado" cor="#3c5232" />
+          <Kpi valor={brl0(fatTotal)} label="Faturamento rastreado" cor="var(--fen-success)" />
           <Kpi valor={brl0(invTotal)} label="Investimento" />
-          <Kpi valor={`${roas.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}×`} label="ROAS médio" cor="#B23A2E" />
+          <Kpi valor={`${roas.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}×`} label="ROAS médio" cor="var(--fen-terra)" />
           <Kpi valor={String(comprasTotal)} label="Vendas" />
         </div>
 

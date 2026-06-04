@@ -4,26 +4,16 @@
    Animacoes "ao vivo" (ping/flash/pulse/rise) + chrome do app.
    ============================================================ */
 
-/* Frame 1280x800 centralizado, igual ao prototipo. */
+/* Tela cheia — sem moldura/centralização (era protótipo 1280x800). */
 .fen-pn-stage {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  box-sizing: border-box;
-  background: var(--fen-argilla);
-  background-image: radial-gradient(circle at 50% -10%, rgba(204, 122, 77, 0.16), transparent 55%);
+  background: var(--fen-avorio);
 }
 .fen-pn-frame {
   display: flex;
-  width: 1280px;
-  height: 800px;
+  width: 100%;
+  min-height: 100vh;
   background: var(--fen-avorio);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(42, 33, 28, 0.28);
-  border: 1px solid var(--fen-border);
 }
 .fen-pn-main {
   flex: 1;
@@ -64,14 +54,97 @@
   width: 232px;
   background: var(--fen-caffe);
   color: var(--fen-avorio);
-  height: 100%;
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 22px 16px;
   box-sizing: border-box;
   flex-shrink: 0;
+  transition: width 0.2s var(--fen-ease), transform 0.22s var(--fen-ease);
+  z-index: 20;
+}
+/* ---------- Sidebar recolhida (desktop = 72px só ícones) ---------- */
+.fen-pn-side.is-collapsed { width: 72px; padding: 22px 10px; }
+.fen-pn-side.is-collapsed .fen-pn-side__word,
+.fen-pn-side.is-collapsed .fen-pn-side__tag,
+.fen-pn-side.is-collapsed .fen-pn-side__group,
+.fen-pn-side.is-collapsed .fen-pn-side__item span,
+.fen-pn-side.is-collapsed .fen-pn-side__badge,
+.fen-pn-side.is-collapsed .fen-pn-side__name,
+.fen-pn-side.is-collapsed .fen-pn-side__role { display: none; }
+.fen-pn-side.is-collapsed .fen-pn-side__brand { justify-content: center; padding: 0; }
+.fen-pn-side.is-collapsed .fen-pn-side__item { justify-content: center; padding: 11px 0; }
+.fen-pn-side.is-collapsed .fen-pn-side__foot { justify-content: center; padding: 10px 0; }
+.fen-pn-side.is-collapsed .fen-pn-side__foot > div { display: none; }
+
+/* ---------- Botão de recolher (no canto sup-esquerdo do main) ---------- */
+.fen-pn-collapse-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 4;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: var(--fen-surface);
+  border: 1px solid var(--fen-border);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--fen-caffe);
+  transition: background 0.15s var(--fen-ease), border-color 0.15s var(--fen-ease);
+}
+.fen-pn-collapse-btn:hover { background: var(--fen-warning-bg); border-color: var(--fen-cotta); color: var(--fen-cotta-d); }
+.fen-pn-main { position: relative; }
+.fen-pn-main .fen-pn-top { padding-left: 64px; }
+
+/* ---------- Mobile (≤ 880px): sidebar vira slide-out ---------- */
+.fen-pn-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 15, 11, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 15;
+}
+@media (max-width: 880px) {
+  .fen-pn-side {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    transform: translateX(-100%);
+    box-shadow: 0 30px 80px rgba(22, 15, 11, 0.4);
+  }
+  .fen-pn-side.is-collapsed { width: 240px; padding: 22px 16px; transform: translateX(-100%); }
+  .fen-pn-side.is-collapsed .fen-pn-side__word,
+  .fen-pn-side.is-collapsed .fen-pn-side__tag,
+  .fen-pn-side.is-collapsed .fen-pn-side__group,
+  .fen-pn-side.is-collapsed .fen-pn-side__item span,
+  .fen-pn-side.is-collapsed .fen-pn-side__name,
+  .fen-pn-side.is-collapsed .fen-pn-side__role { display: revert; }
+  .fen-pn-side.is-open { transform: translateX(0); }
+  .fen-pn-backdrop.is-open { display: block; }
+  .fen-pn-top { padding-left: 64px; }
 }
 .fen-pn-side__brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 4px; }
+.fen-pn-side__close {
+  margin-left: auto;
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  background: rgba(243, 236, 226, 0.06);
+  border: 1px solid rgba(243, 236, 226, 0.1);
+  border-radius: 6px;
+  color: var(--fen-avorio);
+  opacity: 0.65;
+  cursor: pointer;
+  transition: opacity 0.15s var(--fen-ease), background 0.15s var(--fen-ease);
+  flex-shrink: 0;
+}
+.fen-pn-side__close:hover { opacity: 1; background: rgba(204, 122, 77, 0.2); }
+.fen-pn-side.is-collapsed .fen-pn-side__close { display: none; }
 .fen-pn-side__word {
   font-family: var(--fen-display);
   font-weight: 900;

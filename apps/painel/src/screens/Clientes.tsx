@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CLIENTES_FENICE, type ClienteFenice } from '@fenice/shared';
 import { Topbar, Scroll } from '../components/Chrome';
+import { ClienteAvatar } from '../components/ClienteAvatar';
 
 // Identidade vem do módulo canônico (só Fenice Lab). A API só ENRIQUECE o
 // status ao vivo — clientes de outras agências (Starken) nunca aparecem aqui.
@@ -65,21 +66,25 @@ export function Clientes({ onOpen }: ClientesProps) {
             const ativo = isAtivo(c);
             return (
               <Card key={c.slug} onClick={() => onOpen(c)} style={{ cursor: 'pointer' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                    <span aria-hidden style={{ width: 9, height: 9, borderRadius: 99, flex: '0 0 auto', background: c.cor }} />
-                    <strong style={{ font: '600 15px/1.2 var(--fen-font)' }}>{c.nome}</strong>
-                  </span>
-                  {badge('rgba(178,58,46,.14)', '#B23A2E', c.agencia)}
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <ClienteAvatar c={c} size={44} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                      <strong style={{ font: '900 16px/1.15 var(--fen-display)', color: 'var(--fen-caffe)', letterSpacing: '-0.01em' }}>
+                        {c.nome}
+                      </strong>
+                      {badge('var(--fen-terra-l)', 'var(--fen-terra-d)', c.agencia)}
+                    </div>
+                    <div style={{ font: '500 12px/1.4 var(--fen-font)', color: 'var(--fen-muted)', marginTop: 4 }}>
+                      {ig}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ font: '500 12px/1.4 var(--fen-font)', color: 'var(--fen-muted)', marginTop: 6 }}>
-                  {ig}
-                </div>
-                <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   {ativo
-                    ? badge('var(--fen-success-bg)', '#3c5232', 'Ativo')
-                    : badge('var(--fen-warning-bg)', '#7a4520', c.statusLabel)}
-                  <span style={{ font: '600 12px/1 var(--fen-font)', color: c.cor }}>abrir portal →</span>
+                    ? badge('var(--fen-success-bg)', 'var(--fen-success)', 'Ativo')
+                    : badge('var(--fen-warning-bg)', 'var(--fen-cotta-d)', c.statusLabel)}
+                  <span style={{ font: '600 12px/1 var(--fen-font)', color: 'var(--fen-terra)' }}>abrir portal →</span>
                 </div>
               </Card>
             );

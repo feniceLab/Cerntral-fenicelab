@@ -7,22 +7,22 @@ const brl = (n: number) => 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDi
 const brl0 = (n: number) => 'R$ ' + n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 
 const SALDO_UI: Record<NivelSaldo, { dot: string; label: string; bg: string; fg: string }> = {
-  critico: { dot: '#B23A2E', label: 'Repor', bg: 'rgba(178,58,46,.14)', fg: '#B23A2E' },
-  baixo: { dot: '#C8742B', label: 'Atenção', bg: 'var(--fen-warning-bg)', fg: '#7a4520' },
-  ok: { dot: '#3c8a3c', label: 'Disponível ok', bg: 'var(--fen-success-bg)', fg: '#3c5232' },
-  cartao: { dot: '#3C6E8F', label: 'No cartão', bg: 'rgba(60,110,143,.14)', fg: '#3C6E8F' },
-  sincronizar: { dot: '#9a8c7a', label: 'Sincronizar', bg: 'rgba(154,140,122,.18)', fg: '#6E5A48' },
+  critico:     { dot: 'var(--fen-terra)',   label: 'Repor',         bg: 'var(--fen-danger-bg)',           fg: 'var(--fen-terra)' },
+  baixo:       { dot: 'var(--fen-cotta)',   label: 'Atenção',       bg: 'var(--fen-warning-bg)',          fg: 'var(--fen-cotta-d)' },
+  ok:          { dot: 'var(--fen-success)', label: 'Disponível ok', bg: 'var(--fen-success-bg)',          fg: 'var(--fen-success)' },
+  cartao:      { dot: 'var(--fen-info)',    label: 'No cartão',     bg: 'var(--fen-info-bg)',             fg: 'var(--fen-info)' },
+  sincronizar: { dot: 'var(--fen-muted)',   label: 'Sincronizar',   bg: 'rgba(154,140,122,.18)',          fg: 'var(--fen-info)' },
 };
 const STATUS_UI: Record<StatusReposicao, [string, string, string]> = {
-  renovada: ['Renovada', 'var(--fen-success-bg)', '#3c5232'],
-  manual: ['Manual', 'rgba(154,140,122,.18)', '#6E5A48'],
-  pendente: ['Pendente', 'var(--fen-warning-bg)', '#7a4520'],
+  renovada: ['Renovada', 'var(--fen-success-bg)', 'var(--fen-success)'],
+  manual:   ['Manual',   'rgba(154,140,122,.18)', 'var(--fen-info)'],
+  pendente: ['Pendente', 'var(--fen-warning-bg)', 'var(--fen-cotta-d)'],
 };
 
 function Kpi({ valor, label, cor }: { valor: string; label: string; cor?: string }) {
   return (
     <Card pad={16}>
-      <div style={{ font: '700 24px/1 var(--fen-font)', color: cor ?? 'var(--fen-ink, #2A211C)' }}>{valor}</div>
+      <div style={{ font: '700 24px/1 var(--fen-font)', color: cor ?? 'var(--fen-caffe)' }}>{valor}</div>
       <div style={{ marginTop: 6, font: '600 11px/1.2 var(--fen-font)', letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--fen-muted)' }}>{label}</div>
     </Card>
   );
@@ -47,7 +47,7 @@ export function Reposicoes() {
         {/* ALERTA DE SALDO BAIXO */}
         {alertas.length > 0 && (
           <Card style={{ borderColor: 'rgba(178,58,46,.35)', background: 'rgba(178,58,46,.05)' }}>
-            <div style={{ font: '700 13px/1.3 var(--fen-font)', color: '#B23A2E' }}>
+            <div style={{ font: '700 13px/1.3 var(--fen-font)', color: 'var(--fen-terra)' }}>
               ⚠ {alertas.length} conta(s) com saldo baixo
             </div>
             <div style={{ marginTop: 4, font: '500 12px/1.4 var(--fen-font)', color: 'var(--fen-muted)' }}>
@@ -75,7 +75,7 @@ export function Reposicoes() {
                 <div style={{ marginTop: 10, font: '600 10px/1 var(--fen-font)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--fen-muted)' }}>
                   {s.funding === 'cartao' ? 'A faturar no cartão' : 'Saldo disponível (pré-pago)'}
                 </div>
-                <div style={{ marginTop: 3, font: '700 22px/1 var(--fen-font)', color: s.nivel === 'critico' ? '#B23A2E' : 'var(--fen-ink, #2A211C)' }}>
+                <div style={{ marginTop: 3, font: '700 22px/1 var(--fen-font)', color: s.nivel === 'critico' ? 'var(--fen-terra)' : 'var(--fen-caffe)' }}>
                   {s.funding === 'cartao'
                     ? (s.noCartao != null ? brl(s.noCartao) : '—')
                     : (s.disponivel != null ? brl(s.disponivel) : '— sincronizar')}
@@ -97,8 +97,8 @@ export function Reposicoes() {
 
         {/* RENOVAÇÃO DE BUDGET */}
         <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
-          <Kpi valor={brl(totalReposto)} label="Reposto no mês" cor="#B23A2E" />
-          <Kpi valor={String(renovadas)} label="Renovadas" cor="#3c5232" />
+          <Kpi valor={brl(totalReposto)} label="Reposto no mês" cor="var(--fen-terra)" />
+          <Kpi valor={String(renovadas)} label="Renovadas" cor="var(--fen-success)" />
           <Kpi valor={String(reps.length)} label="Campanhas" />
         </div>
 
@@ -156,7 +156,7 @@ function Bloco({ label, valor, destaque, forte }: { label: string; valor: string
       borderRadius: 10, padding: '8px 12px', minWidth: 110,
     }}>
       <div style={{ font: '600 9px/1 var(--fen-font)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--fen-muted)' }}>{label}</div>
-      <div style={{ marginTop: 3, font: `${forte ? 800 : 700} 16px/1 var(--fen-font)`, color: forte ? '#B23A2E' : 'var(--fen-ink, #2A211C)' }}>{valor}</div>
+      <div style={{ marginTop: 3, font: `${forte ? 800 : 700} 16px/1 var(--fen-font)`, color: forte ? 'var(--fen-terra)' : 'var(--fen-caffe)' }}>{valor}</div>
     </div>
   );
 }
