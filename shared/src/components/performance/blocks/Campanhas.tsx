@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { SkeletonTable } from './Skeletons';
+import { CampanhaDrillDown } from './CampanhaDrillDown';
 import { nivelRoas } from '../../../trafego';
 
 interface CampaignRow {
@@ -61,6 +62,7 @@ export function Campanhas({ slug, preset, since, until, margemCliente }: Props) 
   const [toast, setToast] = useState<{ kind: 'ok' | 'bad'; msg: string } | null>(null);
   const [confirming, setConfirming] = useState<PendingAction | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [drillCampaign, setDrillCampaign] = useState<{ id: string; name: string } | null>(null);
 
   const showToast = (kind: 'ok' | 'bad', msg: string) => {
     setToast({ kind, msg });
@@ -214,7 +216,17 @@ export function Campanhas({ slug, preset, since, until, margemCliente }: Props) 
             const isActive = c.effective_status === 'ACTIVE';
             const isPaused = c.effective_status === 'PAUSED';
             return (
-              <div key={c.campaign_id} className={`perf-camp-row perf-camp-tone-${tone}`}>
+              <div
+                key={c.campaign_id}
+                className={`perf-camp-row perf-camp-row--clickable perf-camp-tone-${tone}`}
+                onClick={(e) => {
+                  // Não abrir drill se clicou nos botões de ação
+                  if ((e.target as HTMLElement).closest('.perf-camp-actions')) return;
+                  setDrillCampaign({ id: c.campaign_id, name: c.name });
+                }}
+                role="button"
+                tabIndex={0}
+              >
                 <div className="perf-camp-name" title={c.name}>{c.name}</div>
                 <div className="ta-c">
                   <span className={`perf-camp-status perf-camp-status--${(c.effective_status || 'OFF').toLowerCase()}`}>
@@ -267,6 +279,17 @@ export function Campanhas({ slug, preset, since, until, margemCliente }: Props) 
           })}
         </div>
       </div>
+
+      {/* DRILL-DOWN — modal com adsets+ads da campanha clicada */}
+      {drillCampaign && (
+        <CampanhaDrillDown
+          slug={slug}
+          preset={preset}
+          campaign_id={drillCampaign.id}
+          campaign_name={drillCampaign.name}
+          onClose={() => setDrillCampaign(null)}
+        />
+      )}
 
       {/* TOAST */}
       {toast && (
