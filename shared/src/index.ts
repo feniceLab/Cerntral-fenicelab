@@ -53,4 +53,24 @@ export {
 export type { ClienteFenice, ClienteStatus } from './clientes/fenice';
 export { CLIENTE_THEMES, themeBySlug, themeFromCor } from './clientes/themes';
 export type { ClienteTheme } from './clientes/themes';
+
+// Tráfego pago — fórmulas Pedro Sobral + Hormozi (delivery BR).
+export {
+  computeSobral,
+  detectarAlertas,
+  margemDoCliente,
+  nivelRoas,
+  nivelFreq,
+  nivelCpaPct,
+  MARGEM_POR_SLUG,
+} from './trafego';
+export type {
+  Nivel,
+  Decisao,
+  MetricasSobral,
+  ComputeInput,
+  AlertaSeveridade,
+  Alerta,
+  AlertaInput,
+} from './trafego';
 // ci: re-trigger deploy (rebuild esbuild + steps build/rsync separados)
