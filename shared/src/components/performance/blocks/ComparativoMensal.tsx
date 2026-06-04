@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SkeletonTable } from './Skeletons';
 
 interface ApiClientRow {
   slug: string;
@@ -70,7 +71,7 @@ export function ComparativoMensal({ slug, margemCliente, monthsBack = 6 }: Props
     });
   }, [slug, margemCliente, monthsBack]);
 
-  if (loading) return <div className="perf-block-loading">Comparando últimos {monthsBack} meses...</div>;
+  if (loading) return <SkeletonTable rows={monthsBack} />;
   if (meses.every((m) => m.revenue === 0)) return null;
 
   return (

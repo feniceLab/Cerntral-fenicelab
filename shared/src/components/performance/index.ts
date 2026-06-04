@@ -11,7 +11,7 @@ export type {
   ApiSaldoRow, ApiSaldoResponse, TabKey, TabDef,
 } from './types';
 
-export { PERIODS, dursDias, fmtBRL, fmtBRL0, fmtNum, fmtRoas, fmtPct, pctDelta, ageString, calcDiasCobertura } from './format';
+export { PERIODS, dursDias, fmtBRL, fmtBRL0, fmtNum, fmtRoas, fmtPct, pctDelta, ageString, calcDiasCobertura, timeUntilRefresh } from './format';
 export { usePerformanceData } from './usePerformanceData';
 export type { UsePerformanceDataInput, UsePerformanceDataResult } from './usePerformanceData';
 

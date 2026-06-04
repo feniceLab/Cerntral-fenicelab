@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SkeletonTable } from './Skeletons';
 
 interface AdRow {
   ad_id: string;
@@ -53,7 +54,7 @@ export function Criativos({ slug, preset, since, until }: Props) {
       .finally(() => setLoading(false));
   }, [slug, preset, since, until]);
 
-  if (loading) return <div className="perf-block-loading">Carregando criativos...</div>;
+  if (loading) return <SkeletonTable rows={4} />;
   if (err) return <div className="perf-empty">Criativos indisponíveis: {err}</div>;
   if (ads.length === 0) return null;
 

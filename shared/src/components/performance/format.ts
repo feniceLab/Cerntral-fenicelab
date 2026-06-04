@@ -75,6 +75,19 @@ export function ageString(date: Date | null): string {
   return `há ${Math.floor(s / 3600)}h`;
 }
 
+/** Countdown até o próximo refresh automático. Retorna string tipo "4:23" ou "agora". */
+export function timeUntilRefresh(updatedAt: Date | null, refreshMs: number): string {
+  if (!updatedAt) return '—';
+  const elapsed = Date.now() - updatedAt.getTime();
+  const remaining = Math.max(0, refreshMs - elapsed);
+  if (remaining < 1000) return 'agora';
+  const totalSec = Math.floor(remaining / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  if (m > 0) return `${m}:${s.toString().padStart(2, '0')}`;
+  return `${s}s`;
+}
+
 export function calcDiasCobertura(saldoCents: number | null, gastoTotalCents: number, diasPeriodo: number): number | null {
   if (saldoCents == null || diasPeriodo <= 0) return null;
   const gastoDiario = gastoTotalCents / diasPeriodo;

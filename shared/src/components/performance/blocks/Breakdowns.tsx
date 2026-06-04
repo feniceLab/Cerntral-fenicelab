@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SkeletonTable } from './Skeletons';
 
 interface BreakdownRow {
   [key: string]: any;
@@ -83,7 +84,7 @@ export function Breakdowns({ slug, preset, since, until }: Props) {
         </div>
       </div>
 
-      {loading && <div className="perf-block-loading">Carregando...</div>}
+      {loading && <SkeletonTable rows={6} />}
       {err && <div className="perf-empty">Indisponível: {err}</div>}
       {!loading && !err && rows.length === 0 && (
         <div className="perf-empty">Sem dados de {currentTab.label.toLowerCase()} no período.</div>

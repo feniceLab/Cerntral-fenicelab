@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ClienteTheme } from '../../clientes/themes';
 import { margemDoCliente } from '../../trafego';
 import type { TabKey, TabDef } from './types';
-import { PERIODS, dursDias, ageString } from './format';
+import { PERIODS, dursDias, ageString, timeUntilRefresh } from './format';
+
+const REFRESH_MS = 5 * 60 * 1000;
 import { usePerformanceData } from './usePerformanceData';
 import { HeroLucro } from './blocks/HeroLucro';
 import { AlertasList } from './blocks/AlertasList';
@@ -70,10 +72,10 @@ export function WarRoomShell({
     document.head.appendChild(link);
   }, [theme.googleFonts, slug]);
 
-  // Tick visual do "há X min"
+  // Tick visual do countdown (a cada 1s pra animar contagem regressiva)
   const [, force] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => force((n) => n + 1), 30 * 1000);
+    const t = setInterval(() => force((n) => n + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -127,9 +129,16 @@ export function WarRoomShell({
         <div className="perf-header-live">
           <span className={`perf-live-dot${data.loading ? ' is-loading' : ''}`} aria-hidden />
           <span className="perf-live-text">
-            {data.err ? `⚠ ${data.err}` :
-             data.loading ? 'atualizando…' :
-             `dado vivo · ${ageString(data.updatedAt)}`}
+            {data.err ? (
+              <>⚠ {data.err}</>
+            ) : data.loading ? (
+              'atualizando…'
+            ) : (
+              <>
+                <span className="perf-live-main">dado vivo · {ageString(data.updatedAt)}</span>
+                <span className="perf-live-next">próx em {timeUntilRefresh(data.updatedAt, REFRESH_MS)}</span>
+              </>
+            )}
           </span>
         </div>
       </header>
@@ -187,8 +196,8 @@ export function WarRoomShell({
         </div>
       </div>
 
-      {/* CONTEÚDO */}
-      <div className="perf-content">
+      {/* CONTEÚDO (key={tab} força remount + animação enter) */}
+      <div className="perf-content" key={tab}>
         {tab === 'resumo' && (
           <ResumoLayout
             data={data}

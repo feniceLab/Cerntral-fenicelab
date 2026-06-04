@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { SkeletonChart } from './Skeletons';
 
 interface DayRow {
   date: string;
@@ -70,7 +71,7 @@ export function Tendencia({ slug, preset, since, until, margemCliente }: Props) 
     });
   }, [days, margemCliente]);
 
-  if (loading) return <div className="perf-block-loading">Carregando tendência...</div>;
+  if (loading) return <SkeletonChart height={240} />;
   if (err) return <div className="perf-empty">Tendência indisponível: {err}</div>;
   if (series.length === 0) return null;
 
