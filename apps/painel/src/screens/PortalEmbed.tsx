@@ -31,18 +31,10 @@ export function PortalEmbed({ cliente, onBack }: PortalEmbedProps) {
   const actor = nomeExibicao || email || undefined;
   const [active, setActive] = useState<EmbedView>('portal');
 
-  // PRODUÇÃO: /painel e /portal vivem no mesmo domínio (central.fenicelab.com.br),
-  // então `/portal/` é same-origin e o iframe herda o localStorage (sessão Supabase).
-  // DEV/PREVIEW: painel (5172) e portal (5171) são dev servers SEPARADOS — `/portal/`
-  // não existe no server do painel. Usa VITE_PORTAL_BASE (ex http://localhost:5171)
-  // ou cai no dev server padrão do portal. (Em dev é cross-origin → sem sessão, só visual.)
-  const env = (import.meta as any).env || {};
-  const portalBase: string = env.VITE_PORTAL_BASE
-    ? env.VITE_PORTAL_BASE.replace(/\/$/, '')
-    : env.DEV
-      ? 'http://localhost:5171/portal'
-      : '/portal';
-  const portalSrc = `${portalBase}/?c=${encodeURIComponent(cliente.slug)}`;
+  // SITE REAL do cliente (deployado em <cliente>.fenicelab.com.br) — é o que a admin
+  // quer ver espelhado: Brand Book, Design System, Cronograma, Performance, Galeria…
+  // (NÃO o protótipo React apps/portal, que é só demo do design system com dados fixos.)
+  const portalSrc = cliente.portalUrl;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -59,7 +51,7 @@ export function PortalEmbed({ cliente, onBack }: PortalEmbedProps) {
         <div style={{ flex: 1, minHeight: 0 }}>
           <Performance cliente={cliente} onBack={onBack} />
         </div>
-      ) : (
+      ) : portalSrc ? (
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <iframe
             key={cliente.slug}
@@ -75,6 +67,22 @@ export function PortalEmbed({ cliente, onBack }: PortalEmbedProps) {
               background: 'var(--fen-bg, #f4efe7)',
             }}
           />
+        </div>
+      ) : (
+        <div
+          style={{
+            flex: 1, minHeight: 'calc(100vh - 53px)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 10,
+            color: 'var(--fen-muted)', textAlign: 'center', padding: 32,
+          }}
+        >
+          <div style={{ font: '700 16px/1.3 var(--fen-display, serif)', color: 'var(--fen-caffe)' }}>
+            Site ainda não publicado
+          </div>
+          <div style={{ font: '500 13px/1.5 var(--fen-font)', maxWidth: 360 }}>
+            {cliente.nome} ainda não tem portal no ar. Use a aba <strong>Performance</strong> pra ver o tráfego ao vivo, ou gere o site pela skill de onboarding.
+          </div>
         </div>
       )}
     </div>
