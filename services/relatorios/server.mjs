@@ -75,6 +75,10 @@ let adminCache = { data: null, ts: 0 };
 let clientsCache = { data: null, ts: 0 };
 let saldoCache = { data: null, ts: 0 };
 let insightsCache = {}; // keyed por período (since_until ou preset:last_month)
+let timeseriesCache = {}; // keyed por slug + período
+let campaignsCache = {}; // keyed por slug + período
+let adsCache = {};        // keyed por slug + período
+let breakdownCache = {};  // keyed por slug + período + breakdown
 
 // ──────────────────────────────────────────────────────────────────────────────
 // BASIC AUTH (área admin)
@@ -700,6 +704,275 @@ async function fetchInsights({ since, until, preset } = {}) {
   return result;
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// /api/timeseries — insights dia-a-dia (Onda 2)
+// /api/campaigns  — lista campanhas + insights agregado (Onda 3)
+// /api/ads        — lista ads com criativo + insights (Onda 4)
+// /api/breakdown  — insights segmentado por dimensão (Onda 4)
+// Todos por slug; lookup do ad_account_id no mapping; cache 60s.
+// ──────────────────────────────────────────────────────────────────────────────
+async function readMappingClient(slug) {
+  const raw = await fs.readFile(path.join(__dirname, 'data', 'clients-mapping.json'), 'utf-8');
+  const map = JSON.parse(raw);
+  return (map.clients || []).find((c) => c.slug === slug && c.ad_account_id);
+}
+
+async function fetchTimeseries({ slug, since, until, preset } = {}) {
+  const periodKey = `${slug}|${since && until ? `${since}_${until}` : `preset:${preset || 'last_month'}`}`;
+  const now = Date.now();
+  const cached = timeseriesCache[periodKey];
+  if (cached && (now - cached.ts) < CACHE_TTL_MS) return cached.data;
+
+  const c = await readMappingClient(slug);
+  if (!c) return { updated_at: new Date().toISOString(), slug, error: 'cliente_nao_encontrado', days: [] };
+  const token = await readToken();
+  if (!token) return { updated_at: new Date().toISOString(), slug, error: 'sem_token', days: [] };
+
+  const rangeParam = since && until
+    ? `time_range=${encodeURIComponent(JSON.stringify({ since, until }))}`
+    : `date_preset=${encodeURIComponent(preset || 'last_month')}`;
+  const fields = 'spend,impressions,reach,clicks,ctr,cpm,cpc,purchase_roas,actions,action_values';
+  const url = `https://graph.facebook.com/v23.0/act_${c.ad_account_id}/insights?level=account&time_increment=1&fields=${fields}&${rangeParam}&limit=500&access_token=${token}`;
+
+  let days = [];
+  let error = null;
+  try {
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j.error) error = j.error.message;
+    else {
+      days = (j.data || []).map((d) => ({
+        date: d.date_start,
+        spend_cents: d.spend != null ? Math.round(Number(d.spend) * 100) : null,
+        revenue_cents: (() => { const v = actVal(d.action_values, 'omni_purchase'); return v != null ? Math.round(v * 100) : null; })(),
+        purchases: actVal(d.actions, 'omni_purchase'),
+        roas: actVal(d.purchase_roas, 'omni_purchase'),
+        impressions: d.impressions != null ? Number(d.impressions) : null,
+        reach: d.reach != null ? Number(d.reach) : null,
+        clicks: d.clicks != null ? Number(d.clicks) : null,
+        ctr: d.ctr != null ? Number(d.ctr) : null,
+        cpm: d.cpm != null ? Number(d.cpm) : null,
+        link_clicks: actVal(d.actions, 'link_click'),
+        add_to_cart: actVal(d.actions, 'add_to_cart'),
+      }));
+    }
+  } catch (e) {
+    error = e.message;
+  }
+
+  const result = { updated_at: new Date().toISOString(), slug, period: periodKey, error, days };
+  timeseriesCache[periodKey] = { data: result, ts: now };
+  return result;
+}
+
+async function fetchCampaigns({ slug, since, until, preset } = {}) {
+  const periodKey = `${slug}|${since && until ? `${since}_${until}` : `preset:${preset || 'last_month'}`}`;
+  const now = Date.now();
+  const cached = campaignsCache[periodKey];
+  if (cached && (now - cached.ts) < CACHE_TTL_MS) return cached.data;
+
+  const c = await readMappingClient(slug);
+  if (!c) return { updated_at: new Date().toISOString(), slug, error: 'cliente_nao_encontrado', campaigns: [] };
+  const token = await readToken();
+  if (!token) return { updated_at: new Date().toISOString(), slug, error: 'sem_token', campaigns: [] };
+
+  const rangeParam = since && until
+    ? `time_range=${encodeURIComponent(JSON.stringify({ since, until }))}`
+    : `date_preset=${encodeURIComponent(preset || 'last_month')}`;
+  const fields = 'campaign_id,campaign_name,spend,impressions,reach,frequency,clicks,ctr,cpc,purchase_roas,actions,action_values';
+  const url = `https://graph.facebook.com/v23.0/act_${c.ad_account_id}/insights?level=campaign&fields=${fields}&${rangeParam}&limit=200&access_token=${token}`;
+
+  // Meta dos campanhas (status/objective/budget) — uma chamada separada
+  const metaUrl = `https://graph.facebook.com/v23.0/act_${c.ad_account_id}/campaigns?fields=id,name,status,effective_status,objective,daily_budget,lifetime_budget,start_time,stop_time,created_time&limit=200&access_token=${token}`;
+
+  let campaigns = [];
+  let error = null;
+  try {
+    const [insR, metaR] = await Promise.all([fetch(url), fetch(metaUrl)]);
+    const ins = await insR.json();
+    const meta = await metaR.json();
+    if (ins.error) { error = ins.error.message; }
+    const metaById = {};
+    for (const m of (meta.data || [])) metaById[m.id] = m;
+    campaigns = (ins.data || []).map((row) => {
+      const m = metaById[row.campaign_id] || {};
+      const purchases = actVal(row.actions, 'omni_purchase');
+      const revenue = actVal(row.action_values, 'omni_purchase');
+      const spend_cents = row.spend != null ? Math.round(Number(row.spend) * 100) : null;
+      return {
+        campaign_id: row.campaign_id,
+        name: row.campaign_name || m.name || row.campaign_id,
+        status: m.status || null,
+        effective_status: m.effective_status || null,
+        objective: m.objective || null,
+        daily_budget_cents: m.daily_budget ? Number(m.daily_budget) : null,
+        lifetime_budget_cents: m.lifetime_budget ? Number(m.lifetime_budget) : null,
+        start_time: m.start_time || null,
+        stop_time: m.stop_time || null,
+        spend_cents,
+        revenue_cents: revenue != null ? Math.round(revenue * 100) : null,
+        purchases: purchases != null ? Math.round(purchases) : null,
+        roas: actVal(row.purchase_roas, 'omni_purchase'),
+        impressions: row.impressions != null ? Number(row.impressions) : null,
+        reach: row.reach != null ? Number(row.reach) : null,
+        frequency: row.frequency != null ? Number(row.frequency) : null,
+        clicks: row.clicks != null ? Number(row.clicks) : null,
+        ctr: row.ctr != null ? Number(row.ctr) : null,
+        cpc: row.cpc != null ? Number(row.cpc) : null,
+        cpa_cents: purchases && spend_cents ? Math.round(spend_cents / purchases) : null,
+      };
+    });
+    // Ordena por ROAS desc (Pareto: top em cima)
+    campaigns.sort((a, b) => (b.roas || 0) - (a.roas || 0));
+  } catch (e) {
+    error = e.message;
+  }
+
+  const result = { updated_at: new Date().toISOString(), slug, period: periodKey, error, campaigns };
+  campaignsCache[periodKey] = { data: result, ts: now };
+  return result;
+}
+
+async function fetchAds({ slug, since, until, preset } = {}) {
+  const periodKey = `${slug}|${since && until ? `${since}_${until}` : `preset:${preset || 'last_month'}`}`;
+  const now = Date.now();
+  const cached = adsCache[periodKey];
+  if (cached && (now - cached.ts) < CACHE_TTL_MS) return cached.data;
+
+  const c = await readMappingClient(slug);
+  if (!c) return { updated_at: new Date().toISOString(), slug, error: 'cliente_nao_encontrado', ads: [] };
+  const token = await readToken();
+  if (!token) return { updated_at: new Date().toISOString(), slug, error: 'sem_token', ads: [] };
+
+  const rangeParam = since && until
+    ? `time_range=${encodeURIComponent(JSON.stringify({ since, until }))}`
+    : `date_preset=${encodeURIComponent(preset || 'last_month')}`;
+  // Insights por ad
+  const insFields = 'ad_id,ad_name,campaign_id,campaign_name,adset_id,adset_name,spend,impressions,reach,clicks,ctr,purchase_roas,actions,action_values';
+  const insUrl = `https://graph.facebook.com/v23.0/act_${c.ad_account_id}/insights?level=ad&fields=${insFields}&${rangeParam}&limit=200&access_token=${token}`;
+
+  let ads = [];
+  let error = null;
+  try {
+    const r = await fetch(insUrl);
+    const ins = await r.json();
+    if (ins.error) {
+      error = ins.error.message;
+    } else {
+      const rows = (ins.data || []);
+      // Enriquece com criativo (thumbnail + body + title) — em paralelo, limit 30 pra não estourar
+      const adIds = rows.slice(0, 30).map((r) => r.ad_id).filter(Boolean);
+      const creativeById = {};
+      if (adIds.length > 0) {
+        const url = `https://graph.facebook.com/v23.0/?ids=${adIds.join(',')}&fields=creative{thumbnail_url,image_url,body,title,object_story_spec},name,status,effective_status&access_token=${token}`;
+        try {
+          const cr = await fetch(url);
+          const cj = await cr.json();
+          for (const id of Object.keys(cj || {})) {
+            if (id === 'error') continue;
+            creativeById[id] = cj[id];
+          }
+        } catch {}
+      }
+      ads = rows.map((row) => {
+        const purchases = actVal(row.actions, 'omni_purchase');
+        const revenue = actVal(row.action_values, 'omni_purchase');
+        const spend_cents = row.spend != null ? Math.round(Number(row.spend) * 100) : null;
+        const adMeta = creativeById[row.ad_id] || {};
+        const cr = adMeta.creative || {};
+        return {
+          ad_id: row.ad_id,
+          name: row.ad_name || adMeta.name || row.ad_id,
+          status: adMeta.status || null,
+          effective_status: adMeta.effective_status || null,
+          campaign_id: row.campaign_id,
+          campaign_name: row.campaign_name,
+          adset_id: row.adset_id,
+          adset_name: row.adset_name,
+          thumbnail_url: cr.thumbnail_url || cr.image_url || null,
+          headline: cr.title || null,
+          body: cr.body || null,
+          spend_cents,
+          revenue_cents: revenue != null ? Math.round(revenue * 100) : null,
+          purchases: purchases != null ? Math.round(purchases) : null,
+          roas: actVal(row.purchase_roas, 'omni_purchase'),
+          impressions: row.impressions != null ? Number(row.impressions) : null,
+          reach: row.reach != null ? Number(row.reach) : null,
+          clicks: row.clicks != null ? Number(row.clicks) : null,
+          ctr: row.ctr != null ? Number(row.ctr) : null,
+          link_clicks: actVal(row.actions, 'link_click'),
+        };
+      });
+      // Ordena por ROAS desc
+      ads.sort((a, b) => (b.roas || 0) - (a.roas || 0));
+    }
+  } catch (e) {
+    error = e.message;
+  }
+
+  const result = { updated_at: new Date().toISOString(), slug, period: periodKey, error, ads };
+  adsCache[periodKey] = { data: result, ts: now };
+  return result;
+}
+
+async function fetchBreakdown({ slug, breakdowns, since, until, preset } = {}) {
+  if (!breakdowns) return { error: 'breakdowns_required', rows: [] };
+  const periodKey = `${slug}|${breakdowns}|${since && until ? `${since}_${until}` : `preset:${preset || 'last_month'}`}`;
+  const now = Date.now();
+  const cached = breakdownCache[periodKey];
+  if (cached && (now - cached.ts) < CACHE_TTL_MS) return cached.data;
+
+  const c = await readMappingClient(slug);
+  if (!c) return { updated_at: new Date().toISOString(), slug, error: 'cliente_nao_encontrado', rows: [] };
+  const token = await readToken();
+  if (!token) return { updated_at: new Date().toISOString(), slug, error: 'sem_token', rows: [] };
+
+  const rangeParam = since && until
+    ? `time_range=${encodeURIComponent(JSON.stringify({ since, until }))}`
+    : `date_preset=${encodeURIComponent(preset || 'last_month')}`;
+  const fields = 'spend,impressions,reach,clicks,ctr,purchase_roas,actions,action_values';
+  const url = `https://graph.facebook.com/v23.0/act_${c.ad_account_id}/insights?level=account&fields=${fields}&breakdowns=${encodeURIComponent(breakdowns)}&${rangeParam}&limit=500&access_token=${token}`;
+
+  let rows = [];
+  let error = null;
+  try {
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j.error) error = j.error.message;
+    else {
+      rows = (j.data || []).map((row) => {
+        const purchases = actVal(row.actions, 'omni_purchase');
+        const revenue = actVal(row.action_values, 'omni_purchase');
+        const out = {
+          spend_cents: row.spend != null ? Math.round(Number(row.spend) * 100) : null,
+          revenue_cents: revenue != null ? Math.round(revenue * 100) : null,
+          purchases: purchases != null ? Math.round(purchases) : null,
+          roas: actVal(row.purchase_roas, 'omni_purchase'),
+          impressions: row.impressions != null ? Number(row.impressions) : null,
+          reach: row.reach != null ? Number(row.reach) : null,
+          clicks: row.clicks != null ? Number(row.clicks) : null,
+          ctr: row.ctr != null ? Number(row.ctr) : null,
+          link_clicks: actVal(row.actions, 'link_click'),
+        };
+        // Copia os campos de breakdown (age, gender, publisher_platform, hourly_stats_*, etc)
+        for (const k of Object.keys(row)) {
+          if (!(k in out) && k !== 'date_start' && k !== 'date_stop' && k !== 'actions' && k !== 'action_values'
+              && k !== 'spend' && k !== 'impressions' && k !== 'reach' && k !== 'clicks' && k !== 'ctr' && k !== 'purchase_roas') {
+            out[k] = row[k];
+          }
+        }
+        return out;
+      });
+    }
+  } catch (e) {
+    error = e.message;
+  }
+
+  const result = { updated_at: new Date().toISOString(), slug, breakdowns, period: periodKey, error, rows };
+  breakdownCache[periodKey] = { data: result, ts: now };
+  return result;
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     // Área admin (Basic Auth) — protege HTML e JSON
@@ -782,6 +1055,59 @@ const server = http.createServer(async (req, res) => {
         'Cache-Control': 'no-cache',
         'Access-Control-Allow-Origin': '*',
       });
+      res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    if (req.url.startsWith('/api/timeseries')) {
+      const u = new URL(req.url, 'http://x');
+      const data = await fetchTimeseries({
+        slug: u.searchParams.get('slug') || undefined,
+        since: u.searchParams.get('since') || undefined,
+        until: u.searchParams.get('until') || undefined,
+        preset: u.searchParams.get('preset') || undefined,
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    if (req.url.startsWith('/api/campaigns')) {
+      const u = new URL(req.url, 'http://x');
+      const data = await fetchCampaigns({
+        slug: u.searchParams.get('slug') || undefined,
+        since: u.searchParams.get('since') || undefined,
+        until: u.searchParams.get('until') || undefined,
+        preset: u.searchParams.get('preset') || undefined,
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    if (req.url.startsWith('/api/ads')) {
+      const u = new URL(req.url, 'http://x');
+      const data = await fetchAds({
+        slug: u.searchParams.get('slug') || undefined,
+        since: u.searchParams.get('since') || undefined,
+        until: u.searchParams.get('until') || undefined,
+        preset: u.searchParams.get('preset') || undefined,
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    if (req.url.startsWith('/api/breakdown')) {
+      const u = new URL(req.url, 'http://x');
+      const data = await fetchBreakdown({
+        slug: u.searchParams.get('slug') || undefined,
+        breakdowns: u.searchParams.get('breakdowns') || undefined,
+        since: u.searchParams.get('since') || undefined,
+        until: u.searchParams.get('until') || undefined,
+        preset: u.searchParams.get('preset') || undefined,
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify(data, null, 2));
       return;
     }
