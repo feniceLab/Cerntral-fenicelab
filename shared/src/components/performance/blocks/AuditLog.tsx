@@ -9,9 +9,20 @@ interface AuditEntry {
   entity_name: string | null;
   action: 'pause' | 'resume' | 'budget_up' | 'budget_down' | null;
   factor: number | null;
+  actor: string | null;
   ok: boolean;
   error: string | null;
 }
+
+type PeriodKey = '24h' | '7d' | '30d' | 'all';
+interface PeriodOpt { key: PeriodKey; label: string; sinceMs: number | null; }
+
+const PERIODS: PeriodOpt[] = [
+  { key: '24h', label: '24h',  sinceMs: 24 * 3600 * 1000 },
+  { key: '7d',  label: '7 dias', sinceMs: 7  * 24 * 3600 * 1000 },
+  { key: '30d', label: '30 dias', sinceMs: 30 * 24 * 3600 * 1000 },
+  { key: 'all', label: 'Tudo', sinceMs: null },
+];
 
 const API_BASE = (import.meta as any).env?.VITE_TRAFEGO_URL || '';
 
@@ -60,12 +71,18 @@ export function AuditLog({ slug, limit = 20, entityType }: AuditLogProps) {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [period, setPeriod] = useState<PeriodKey>('24h');
 
   const load = useCallback(() => {
     setLoading(true);
     setErr(null);
     const params = new URLSearchParams({ slug, limit: String(limit) });
     if (entityType) params.set('entity_type', entityType);
+    const opt = PERIODS.find((p) => p.key === period);
+    if (opt?.sinceMs != null) {
+      const sinceIso = new Date(Date.now() - opt.sinceMs).toISOString();
+      params.set('since', sinceIso);
+    }
     fetch(`${API_BASE}/api/audit-log?${params}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
@@ -74,7 +91,7 @@ export function AuditLog({ slug, limit = 20, entityType }: AuditLogProps) {
       })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
-  }, [slug, limit, entityType]);
+  }, [slug, limit, entityType, period]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -91,16 +108,32 @@ export function AuditLog({ slug, limit = 20, entityType }: AuditLogProps) {
           <div className="perf-section-kicker">Histórico operacional</div>
           <div className="perf-section-title">O que foi mexido</div>
         </div>
-        <button
-          type="button"
-          className="perf-icon-btn"
-          onClick={load}
-          disabled={loading}
-          aria-label="Atualizar"
-          title="Atualizar agora"
-        >
-          {loading ? '…' : '↻'}
-        </button>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div className="perf-metric-tabs" role="tablist" aria-label="Período do histórico">
+            {PERIODS.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                role="tab"
+                aria-selected={p.key === period}
+                className={`perf-metric-tab${p.key === period ? ' is-on' : ''}`}
+                onClick={() => setPeriod(p.key)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="perf-icon-btn"
+            onClick={load}
+            disabled={loading}
+            aria-label="Atualizar"
+            title="Atualizar agora"
+          >
+            {loading ? '…' : '↻'}
+          </button>
+        </div>
       </div>
       {loading && entries.length === 0 && <SkeletonTable rows={4} />}
       {err && <div className="perf-empty">Erro: {err}</div>}
@@ -118,6 +151,7 @@ export function AuditLog({ slug, limit = 20, entityType }: AuditLogProps) {
                 <span className="perf-audit-icon">{e.ok ? icon : '⚠'}</span>
                 <div className="perf-audit-body">
                   <div className="perf-audit-line">
+                    <span className="perf-audit-actor">{e.actor || 'Sistema'}</span>{' '}
                     <strong>{verb}</strong> {label} <em>{e.entity_name || e.entity_id || '—'}</em>
                   </div>
                   {!e.ok && e.error && (

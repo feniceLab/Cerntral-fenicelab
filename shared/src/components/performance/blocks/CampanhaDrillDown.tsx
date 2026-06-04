@@ -54,7 +54,8 @@ export function CampanhaDrillDown({ slug, preset, campaign_id, campaign_name, on
   const [reloadKey, setReloadKey] = useState(0);
 
   // Hook compartilhado: pause/resume de campaign/adset/ad com modal+toast
-  const actions = useEntityActions(slug);
+  // actor: hoje hardcoded ('Painel'); quando auth chegar virá do user logado.
+  const actions = useEntityActions(slug, 'Painel');
 
   useEffect(() => {
     setLoading(true);

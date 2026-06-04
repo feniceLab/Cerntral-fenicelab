@@ -989,26 +989,51 @@ async function fetchBreakdown({ slug, breakdowns, since, until, preset } = {}) {
 // Toda chamada de postEntityAction grava 1 linha (ok ou erro).
 // ──────────────────────────────────────────────────────────────────────────────
 const AUDIT_LOG_PATH = path.join(__dirname, 'data', 'audit-log.jsonl');
+const AUDIT_LOG_MAX_BYTES = 10 * 1024 * 1024;  // 10 MB — rotaciona quando ultrapassa
+
+/** Rotaciona o jsonl se ultrapassou o cap. Move pra audit-log.archive-<YYYYMMDD-HHMMSS>.jsonl. */
+async function rotateAuditLogIfNeeded() {
+  try {
+    const stat = await fs.stat(AUDIT_LOG_PATH);
+    if (stat.size < AUDIT_LOG_MAX_BYTES) return;
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const archive = path.join(path.dirname(AUDIT_LOG_PATH), `audit-log.archive-${ts}.jsonl`);
+    await fs.rename(AUDIT_LOG_PATH, archive);
+    console.log(`audit log rotated → ${path.basename(archive)} (${(stat.size / 1024 / 1024).toFixed(2)} MB)`);
+  } catch (e) {
+    if (e.code !== 'ENOENT') console.warn('audit log rotation failed:', e.message);
+  }
+}
 
 async function logAuditEntry(entry) {
   try {
-    const line = JSON.stringify({ ts: new Date().toISOString(), ...entry }) + '\n';
+    await rotateAuditLogIfNeeded();
+    const line = JSON.stringify({
+      ts: new Date().toISOString(),
+      actor: entry?.actor || null,
+      ...entry,
+    }) + '\n';
     await fs.appendFile(AUDIT_LOG_PATH, line, 'utf-8');
   } catch (e) {
     console.warn('audit log append failed:', e.message);
   }
 }
 
-async function readAuditLog({ slug, entity_type, limit = 50 } = {}) {
+async function readAuditLog({ slug, entity_type, limit = 50, since } = {}) {
   try {
     const raw = await fs.readFile(AUDIT_LOG_PATH, 'utf-8');
     const lines = raw.split('\n').filter(Boolean);
     const lim = Math.min(Math.max(1, Number(limit) || 50), 500);
-    const recent = lines.slice(-lim - 100);  // pega mais do que precisa; filtra; corta no fim
+    const sinceMs = since ? Date.parse(since) : null;
+    // Lê de trás pra frente; sai quando passa do `since` ou atinge `limit`.
     const parsed = [];
-    for (let i = recent.length - 1; i >= 0; i--) {
+    for (let i = lines.length - 1; i >= 0; i--) {
       try {
-        const o = JSON.parse(recent[i]);
+        const o = JSON.parse(lines[i]);
+        if (sinceMs != null) {
+          const ts = Date.parse(o.ts);
+          if (!isNaN(ts) && ts < sinceMs) break;  // ordenado por ts crescente → corta
+        }
         if (slug && o.slug !== slug) continue;
         if (entity_type && o.entity_type !== entity_type) continue;
         parsed.push(o);
@@ -1088,8 +1113,13 @@ async function postEntityAction({ slug, entity_type, entity_id, action, factor }
 
 // Wrapper que faz audit log de cada chamada (sucesso ou erro).
 // Mantém entity_name opcional pra log mais legível.
-async function postEntityActionLogged(payload) {
+async function postEntityActionLogged(payload, headers = {}) {
   const result = await postEntityAction(payload);
+  // actor: prioridade — body.actor → header X-Actor → null
+  const actor =
+    (payload && typeof payload.actor === 'string' && payload.actor.trim()) ||
+    (headers['x-actor'] && String(headers['x-actor']).trim()) ||
+    null;
   await logAuditEntry({
     slug: payload?.slug || null,
     entity_type: payload?.entity_type || null,
@@ -1097,6 +1127,7 @@ async function postEntityActionLogged(payload) {
     entity_name: payload?.entity_name || null,
     action: payload?.action || null,
     factor: payload?.factor || null,
+    actor,
     ok: result.ok,
     error: result.error || null,
   });
@@ -1104,7 +1135,7 @@ async function postEntityActionLogged(payload) {
 }
 
 // Retrocompat: payload antigo { slug, campaign_id, action } → mapeia pra novo formato
-async function postCampaignAction(payload) {
+async function postCampaignAction(payload, headers = {}) {
   if (payload && payload.campaign_id && !payload.entity_id) {
     return postEntityActionLogged({
       slug: payload.slug,
@@ -1112,9 +1143,11 @@ async function postCampaignAction(payload) {
       entity_id: payload.campaign_id,
       action: payload.action,
       factor: payload.factor,
-    });
+      entity_name: payload.entity_name,
+      actor: payload.actor,
+    }, headers);
   }
-  return postEntityActionLogged(payload || {});
+  return postEntityActionLogged(payload || {}, headers);
 }
 
 const server = http.createServer(async (req, res) => {
@@ -1248,7 +1281,7 @@ const server = http.createServer(async (req, res) => {
       for await (const chunk of req) body += chunk;
       let payload = {};
       try { payload = JSON.parse(body); } catch {}
-      const result = await postCampaignAction(payload);
+      const result = await postCampaignAction(payload, req.headers);
       res.writeHead(result.ok ? 200 : 400, {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-cache',
@@ -1275,6 +1308,7 @@ const server = http.createServer(async (req, res) => {
         slug: u.searchParams.get('slug') || undefined,
         entity_type: u.searchParams.get('entity_type') || undefined,
         limit: u.searchParams.get('limit') || undefined,
+        since: u.searchParams.get('since') || undefined,
       });
       res.writeHead(200, {
         'Content-Type': 'application/json; charset=utf-8',

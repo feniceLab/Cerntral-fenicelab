@@ -956,3 +956,15 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* Audit log — chip do actor */
+.perf-audit-actor {
+  font: 700 10px/1 var(--p-font-body);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: rgba(255,255,255,.06);
+  color: var(--p-muted);
+  margin-right: 2px;
+}

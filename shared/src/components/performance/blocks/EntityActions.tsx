@@ -43,7 +43,7 @@ const ACTION_VERB_PAST: Record<EntityAction, string> = {
 // ─────────────────────────────────────────────────────────────────────────────
 // Hook — estado centralizado de pending/toast/confirming + doAction
 // ─────────────────────────────────────────────────────────────────────────────
-export function useEntityActions(slug: string) {
+export function useEntityActions(slug: string, actor?: string) {
   const [pending, setPending] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [confirming, setConfirming] = useState<PendingConfirm | null>(null);
@@ -64,7 +64,7 @@ export function useEntityActions(slug: string) {
       const r = await fetch(`${API_BASE}/api/campaign/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, entity_type, entity_id, action, entity_name }),
+        body: JSON.stringify({ slug, entity_type, entity_id, action, entity_name, actor }),
       });
       const j = await r.json();
       if (j.ok) {
