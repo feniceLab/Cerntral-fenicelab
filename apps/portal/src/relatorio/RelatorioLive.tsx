@@ -5,6 +5,10 @@ export interface RelatorioLiveProps {
   clienteNome: string;
   logo: string | null;
   theme: ClienteTheme;
+  /** RBAC — repassado quando o cliente está logado (habilita Criar campanha). */
+  userRole?: 'admin_fenice' | 'cliente';
+  userEmail?: string;
+  userAuthId?: string;
 }
 
 /**

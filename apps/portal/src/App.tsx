@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { clienteBySlug, themeBySlug } from '@fenice/shared';
+import { useEffect, useState } from 'react';
+import { clienteBySlug, themeBySlug, supabase } from '@fenice/shared';
 import './portal.css';
 import { DeviceFrame } from './components/DeviceFrame';
 import { BottomNav } from './components/BottomNav';
@@ -33,11 +33,52 @@ export function App() {
   return <PortalApp />;
 }
 
+// Sessão Supabase no portal — se o cliente está logado, habilita Criar campanha.
+// Cross-origin no iframe da Arena pode não ter sessão (storage partitioning) —
+// nesse caso podeCriar=false e o war room funciona normal só sem o botão.
+interface PortalAuth {
+  authId?: string;
+  email?: string;
+  role?: 'admin_fenice' | 'cliente';
+  loading: boolean;
+}
+function usePortalAuth(): PortalAuth {
+  const [auth, setAuth] = useState<PortalAuth>({ loading: true });
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const user = data.session?.user;
+        if (!user) { if (alive) setAuth({ loading: false }); return; }
+        // role/cliente_slug da tabela usuarios
+        let role: 'admin_fenice' | 'cliente' | undefined;
+        try {
+          const { data: row } = await supabase
+            .from('usuarios')
+            .select('role, papel')
+            .eq('auth_id', user.id)
+            .maybeSingle();
+          const raw = ((row as any)?.role ?? (row as any)?.papel ?? '').toLowerCase();
+          if (raw.includes('admin') || raw === 'fenice' || raw === 'agencia') role = 'admin_fenice';
+          else if (raw) role = 'cliente';
+        } catch { /* ignore */ }
+        if (alive) setAuth({ authId: user.id, email: user.email ?? undefined, role, loading: false });
+      } catch {
+        if (alive) setAuth({ loading: false });
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+  return auth;
+}
+
 // Performance war room (dado vivo Meta Graph) — full bleed pro iframe do brand book.
 function EmbeddedReport() {
   const cliente = clienteBySlug(SLUG);
   const report = REPORTS[SLUG];
   const theme = themeBySlug(SLUG, cliente?.cor || '#B23A2E');
+  const auth = usePortalAuth();
   return (
     <div style={{ position: 'fixed', inset: 0, overflow: 'auto', background: theme.bg }}>
       <RelatorioLive
@@ -45,6 +86,9 @@ function EmbeddedReport() {
         clienteNome={cliente?.nome || SLUG}
         logo={report?.logo || null}
         theme={theme}
+        userRole={auth.role}
+        userEmail={auth.email}
+        userAuthId={auth.authId}
       />
     </div>
   );

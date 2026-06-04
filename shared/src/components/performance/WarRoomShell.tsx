@@ -197,16 +197,6 @@ export function WarRoomShell({
           ))}
         </div>
         <div className="perf-toolbar-right">
-          {podeCriar && (
-            <button
-              type="button"
-              className="perf-criar-btn"
-              onClick={() => abrirCriar()}
-              title="Criar nova campanha"
-            >
-              <span aria-hidden>＋</span> Nova campanha
-            </button>
-          )}
           <div className="perf-period" role="tablist" aria-label="Período">
             {PERIODS.map((p) => (
               <button
