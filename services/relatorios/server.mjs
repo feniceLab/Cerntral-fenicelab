@@ -833,8 +833,8 @@ async function fetchCampaigns({ slug, since, until, preset } = {}) {
   return result;
 }
 
-async function fetchAds({ slug, since, until, preset } = {}) {
-  const periodKey = `${slug}|${since && until ? `${since}_${until}` : `preset:${preset || 'last_month'}`}`;
+async function fetchAds({ slug, since, until, preset, campaign_id } = {}) {
+  const periodKey = `${slug}|${campaign_id || 'all'}|${since && until ? `${since}_${until}` : `preset:${preset || 'last_month'}`}`;
   const now = Date.now();
   const cached = adsCache[periodKey];
   if (cached && (now - cached.ts) < CACHE_TTL_MS) return cached.data;
@@ -849,7 +849,11 @@ async function fetchAds({ slug, since, until, preset } = {}) {
     : `date_preset=${encodeURIComponent(preset || 'last_month')}`;
   // Insights por ad
   const insFields = 'ad_id,ad_name,campaign_id,campaign_name,adset_id,adset_name,spend,impressions,reach,clicks,ctr,purchase_roas,actions,action_values';
-  const insUrl = `https://graph.facebook.com/v23.0/act_${c.ad_account_id}/insights?level=ad&fields=${insFields}&${rangeParam}&limit=200&access_token=${token}`;
+  // Filtro por campaign_id (drill-down) via parâmetro `filtering` da Meta
+  const filtering = campaign_id
+    ? `&filtering=${encodeURIComponent(JSON.stringify([{ field: 'campaign.id', operator: 'EQUAL', value: String(campaign_id) }]))}`
+    : '';
+  const insUrl = `https://graph.facebook.com/v23.0/act_${c.ad_account_id}/insights?level=ad&fields=${insFields}&${rangeParam}${filtering}&limit=200&access_token=${token}`;
 
   let ads = [];
   let error = null;
@@ -1145,6 +1149,7 @@ const server = http.createServer(async (req, res) => {
         since: u.searchParams.get('since') || undefined,
         until: u.searchParams.get('until') || undefined,
         preset: u.searchParams.get('preset') || undefined,
+        campaign_id: u.searchParams.get('campaign_id') || undefined,
       });
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify(data, null, 2));
