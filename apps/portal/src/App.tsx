@@ -11,6 +11,7 @@ import { BrandBook } from './screens/BrandBook';
 import { Aprovacao } from './screens/Aprovacao';
 import { Sugestoes } from './screens/Sugestoes';
 import { Relatorio } from './relatorio/Relatorio';
+import { RelatorioLive } from './relatorio/RelatorioLive';
 import { REPORTS } from './relatorio/report-data';
 import {
   isPortalTab,
@@ -33,19 +34,21 @@ export function App() {
 }
 
 // Relatório standalone (full-bleed) pra embutir no brand book.
+//   - Topo: dado AO VIVO via /api/insights (Meta Graph) — seletor de período + Δ + auto-refresh
+//   - Base: relatório editorial mensal (snapshot rico do último fechamento)
 function EmbeddedReport() {
   const cliente = clienteBySlug(SLUG);
   const report = REPORTS[SLUG];
   const theme = themeBySlug(SLUG, cliente?.cor || '#B23A2E');
   return (
-    <div style={{ position: 'fixed', inset: 0, overflow: 'auto' }}>
-      {report ? (
-        <Relatorio data={report} theme={theme} />
-      ) : (
-        <div style={{ padding: 24, color: '#6b5d4f', font: '500 14px/1.6 system-ui' }}>
-          Relatório de performance em breve.
-        </div>
-      )}
+    <div style={{ position: 'fixed', inset: 0, overflow: 'auto', background: theme.bg }}>
+      <RelatorioLive
+        slug={SLUG}
+        clienteNome={cliente?.nome || SLUG}
+        logo={report?.logo || null}
+        theme={theme}
+      />
+      {report && <Relatorio data={report} theme={theme} />}
     </div>
   );
 }
