@@ -979,27 +979,44 @@ async function fetchBreakdown({ slug, breakdowns, since, until, preset } = {}) {
 
 // ──────────────────────────────────────────────────────────────────────────────
 // POST /api/campaign/action — quick action operacional (Pausar/Reativar/+budget)
-// Body JSON: { slug, campaign_id, action: 'pause'|'resume'|'budget_up'|'budget_down' }
-// Valida que campaign_id pertence ao ad_account_id do slug antes de mexer.
-// Requer token Meta com scope ads_management (confirmado em produção).
+// Body JSON novo: { slug, entity_type: 'campaign'|'adset'|'ad', entity_id, action, factor }
+// Body JSON antigo (retrocompat): { slug, campaign_id, action, factor }
+// Valida que a entidade pertence ao ad_account_id do slug antes de mexer.
+// budget_up/budget_down só pra campaign. Requer token Meta com scope ads_management.
 // ──────────────────────────────────────────────────────────────────────────────
-async function postCampaignAction({ slug, campaign_id, action, factor }) {
-  if (!slug || !campaign_id || !action) return { ok: false, error: 'missing_params' };
+async function postEntityAction({ slug, entity_type, entity_id, action, factor }) {
+  if (!slug || !entity_type || !entity_id || !action) return { ok: false, error: 'missing_params' };
+  if (!['campaign', 'adset', 'ad'].includes(entity_type)) {
+    return { ok: false, error: 'entity_type_invalido' };
+  }
   const c = await readMappingClient(slug);
   if (!c) return { ok: false, error: 'cliente_nao_encontrado' };
   const token = await readToken();
   if (!token) return { ok: false, error: 'sem_token' };
 
-  // 1) Confirma que a campanha pertence à conta do slug
+  // Campos de validação por tipo (todos retornam account_id)
+  const fieldsByType = {
+    campaign: 'account_id,daily_budget,status',
+    adset:    'account_id,campaign_id,status',
+    ad:       'account_id,adset_id,campaign_id,status',
+  };
+
+  // budget_up/budget_down só funcionam pra campanha
+  if ((action === 'budget_up' || action === 'budget_down') && entity_type !== 'campaign') {
+    return { ok: false, error: 'budget_action_apenas_campaign' };
+  }
+
   try {
-    const checkUrl = `https://graph.facebook.com/v23.0/${campaign_id}?fields=account_id,daily_budget,status&access_token=${token}`;
+    // 1) Confirma ownership: GET na entidade e compara account_id com o do slug
+    const checkUrl = `https://graph.facebook.com/v23.0/${entity_id}?fields=${fieldsByType[entity_type]}&access_token=${token}`;
     const cr = await fetch(checkUrl);
     const cj = await cr.json();
     if (cj.error) return { ok: false, error: cj.error.message };
     if (String(cj.account_id) !== String(c.ad_account_id)) {
-      return { ok: false, error: `campanha não pertence a ${slug} (conta ${cj.account_id} vs ${c.ad_account_id})` };
+      return { ok: false, error: `${entity_type} não pertence a ${slug} (conta ${cj.account_id} vs ${c.ad_account_id})` };
     }
 
+    // 2) Monta body do POST de atualização
     let body = '';
     if (action === 'pause') body = `status=PAUSED&access_token=${token}`;
     else if (action === 'resume') body = `status=ACTIVE&access_token=${token}`;
@@ -1013,7 +1030,7 @@ async function postCampaignAction({ slug, campaign_id, action, factor }) {
       return { ok: false, error: 'action_invalida' };
     }
 
-    const url = `https://graph.facebook.com/v23.0/${campaign_id}`;
+    const url = `https://graph.facebook.com/v23.0/${entity_id}`;
     const r = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1024,10 +1041,25 @@ async function postCampaignAction({ slug, campaign_id, action, factor }) {
     // invalida caches afetadas
     insightsCache = {};
     campaignsCache = {};
+    adsCache = {};
     return { ok: true, result: j };
   } catch (e) {
     return { ok: false, error: e.message };
   }
+}
+
+// Retrocompat: payload antigo { slug, campaign_id, action } → mapeia pra novo formato
+async function postCampaignAction(payload) {
+  if (payload && payload.campaign_id && !payload.entity_id) {
+    return postEntityAction({
+      slug: payload.slug,
+      entity_type: 'campaign',
+      entity_id: payload.campaign_id,
+      action: payload.action,
+      factor: payload.factor,
+    });
+  }
+  return postEntityAction(payload || {});
 }
 
 const server = http.createServer(async (req, res) => {

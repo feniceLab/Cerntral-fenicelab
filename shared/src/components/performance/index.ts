@@ -25,3 +25,20 @@ export { Campanhas } from './blocks/Campanhas';
 export { Criativos } from './blocks/Criativos';
 export { Breakdowns } from './blocks/Breakdowns';
 export { ComparativoMensal } from './blocks/ComparativoMensal';
+export { ComparativoAds } from './blocks/ComparativoAds';
+export { FavoritoStar } from './blocks/FavoritoStar';
+export { FavoritosCriativos } from './blocks/FavoritosCriativos';
+export { useFavoritos } from './useFavoritos';
+export type { UseFavoritosResult } from './useFavoritos';
+export {
+  useEntityActions,
+  ConfirmModal,
+  ToastView,
+  EntityActionButton,
+} from './blocks/EntityActions';
+export type {
+  EntityType,
+  EntityAction,
+  PendingConfirm,
+  ToastState,
+} from './blocks/EntityActions';

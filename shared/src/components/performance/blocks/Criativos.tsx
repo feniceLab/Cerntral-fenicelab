@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FavoritoStar } from './FavoritoStar';
 import { SkeletonTable } from './Skeletons';
 
 interface AdRow {
@@ -75,7 +76,7 @@ export function Criativos({ slug, preset, since, until }: Props) {
       </div>
       <div className="perf-criativos-grid">
         {top.map((a) => (
-          <AdCard key={a.ad_id} ad={a} tone="ok" />
+          <AdCard key={a.ad_id} ad={a} tone="ok" slug={slug} />
         ))}
       </div>
 
@@ -89,7 +90,7 @@ export function Criativos({ slug, preset, since, until }: Props) {
           </div>
           <div className="perf-criativos-grid">
             {worst.map((a) => (
-              <AdCard key={a.ad_id} ad={a} tone="bad" />
+              <AdCard key={a.ad_id} ad={a} tone="bad" slug={slug} />
             ))}
           </div>
         </>
@@ -98,15 +99,16 @@ export function Criativos({ slug, preset, since, until }: Props) {
   );
 }
 
-function AdCard({ ad, tone }: { ad: AdRow; tone: 'ok' | 'bad' }) {
+function AdCard({ ad, tone, slug }: { ad: AdRow; tone: 'ok' | 'bad'; slug: string }) {
   return (
     <div className={`perf-ad-card perf-ad-card--${tone}`}>
-      <div className="perf-ad-thumb">
+      <div className="perf-ad-thumb" style={{ position: 'relative' }}>
         {ad.thumbnail_url ? (
           <img src={ad.thumbnail_url} alt={ad.name} loading="lazy" />
         ) : (
           <div className="perf-ad-thumb-placeholder">sem thumb</div>
         )}
+        <FavoritoStar slug={slug} adId={ad.ad_id} className="is-overlay" />
         <div className={`perf-ad-roas perf-ad-roas--${tone}`}>{fmtRoas(ad.roas)}</div>
       </div>
       <div className="perf-ad-info">

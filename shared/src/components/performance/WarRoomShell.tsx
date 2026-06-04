@@ -16,6 +16,7 @@ import { Campanhas } from './blocks/Campanhas';
 import { Criativos } from './blocks/Criativos';
 import { Breakdowns } from './blocks/Breakdowns';
 import { ComparativoMensal } from './blocks/ComparativoMensal';
+import { FavoritosCriativos } from './blocks/FavoritosCriativos';
 import './performance.css';
 
 const TABS: TabDef[] = [
@@ -23,6 +24,7 @@ const TABS: TabDef[] = [
   { key: 'campanhas', label: 'Campanhas' },
   { key: 'criativos', label: 'Criativos' },
   { key: 'demografia', label: 'Demografia' },
+  { key: 'favoritos', label: '★ Favoritos' },
 ];
 
 export interface WarRoomShellProps {
@@ -220,6 +222,11 @@ export function WarRoomShell({
         {tab === 'demografia' && (
           <div className="perf-tab-content">
             <Breakdowns slug={slug} preset={opt.preset} />
+          </div>
+        )}
+        {tab === 'favoritos' && (
+          <div className="perf-tab-content">
+            <FavoritosCriativos slug={slug} preset={opt.preset} />
           </div>
         )}
       </div>

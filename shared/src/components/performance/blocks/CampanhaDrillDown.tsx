@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { SkeletonTable } from './Skeletons';
+import { ComparativoAds } from './ComparativoAds';
+import { FavoritoStar } from './FavoritoStar';
+import {
+  useEntityActions,
+  ConfirmModal,
+  ToastView,
+  EntityActionButton,
+} from './EntityActions';
 
 interface AdRow {
   ad_id: string;
@@ -43,6 +51,10 @@ export function CampanhaDrillDown({ slug, preset, campaign_id, campaign_name, on
   const [ads, setAds] = useState<AdRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // Hook compartilhado: pause/resume de campaign/adset/ad com modal+toast
+  const actions = useEntityActions(slug);
 
   useEffect(() => {
     setLoading(true);
@@ -57,7 +69,7 @@ export function CampanhaDrillDown({ slug, preset, campaign_id, campaign_name, on
       })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
-  }, [slug, preset, campaign_id]);
+  }, [slug, preset, campaign_id, reloadKey]);
 
   // ESC fecha
   useEffect(() => {
@@ -136,6 +148,10 @@ export function CampanhaDrillDown({ slug, preset, campaign_id, campaign_name, on
             const adsetRev = g.ads.reduce((s, a) => s + (a.revenue_cents || 0), 0);
             const adsetRoas = adsetSpend > 0 ? adsetRev / adsetSpend : 0;
             const adsetPurchases = g.ads.reduce((s, a) => s + (a.purchases || 0), 0);
+            // Status agregado do adset (majoritário dos ads pra decidir pause/resume)
+            const active = g.ads.filter((a) => a.effective_status === 'ACTIVE').length;
+            const paused = g.ads.filter((a) => a.effective_status === 'PAUSED').length;
+            const adsetStatus = active > paused ? 'ACTIVE' : paused > 0 ? 'PAUSED' : null;
             return (
               <div key={g.adset_id || g.adset_name} className="perf-adset-group">
                 <div className="perf-adset-head">
@@ -143,19 +159,42 @@ export function CampanhaDrillDown({ slug, preset, campaign_id, campaign_name, on
                   <div className="perf-adset-meta">
                     {g.ads.length} ad{g.ads.length !== 1 ? 's' : ''} · {fmtBRL(adsetSpend)} · ROAS {fmtRoas(adsetRoas)} · {adsetPurchases} compras
                   </div>
+                  {g.adset_id && adsetStatus && (
+                    <EntityActionButton
+                      entity_type="adset"
+                      entity_id={g.adset_id}
+                      name={g.adset_name}
+                      effective_status={adsetStatus}
+                      onConfirmAsk={actions.setConfirming}
+                      pending={actions.pending}
+                    />
+                  )}
                 </div>
                 <div className="perf-drill-ads">
                   {g.ads.map((a) => {
                     const tone = (a.roas || 0) >= 3 ? 'ok' : (a.roas || 0) < 1.5 ? 'bad' : 'neutral';
                     return (
                       <div key={a.ad_id} className={`perf-drill-ad perf-drill-ad--${tone}`}>
-                        {a.thumbnail_url ? (
-                          <img className="perf-drill-ad-thumb" src={a.thumbnail_url} alt={a.name} loading="lazy" />
-                        ) : (
-                          <div className="perf-drill-ad-thumb perf-drill-ad-thumb--ph">no thumb</div>
-                        )}
+                        <div style={{ position: 'relative' }}>
+                          {a.thumbnail_url ? (
+                            <img className="perf-drill-ad-thumb" src={a.thumbnail_url} alt={a.name} loading="lazy" />
+                          ) : (
+                            <div className="perf-drill-ad-thumb perf-drill-ad-thumb--ph">no thumb</div>
+                          )}
+                          <FavoritoStar slug={slug} adId={a.ad_id} className="is-overlay" />
+                        </div>
                         <div className="perf-drill-ad-info">
-                          <div className="perf-drill-ad-name" title={a.name}>{a.name}</div>
+                          <div className="perf-drill-ad-name" title={a.name}>
+                            {a.name}
+                            <EntityActionButton
+                              entity_type="ad"
+                              entity_id={a.ad_id}
+                              name={a.name}
+                              effective_status={a.effective_status}
+                              onConfirmAsk={actions.setConfirming}
+                              pending={actions.pending}
+                            />
+                          </div>
                           {a.headline && <div className="perf-drill-ad-headline">{a.headline}</div>}
                           {a.body && <div className="perf-drill-ad-body">{a.body.slice(0, 100)}{a.body.length > 100 ? '…' : ''}</div>}
                           <div className="perf-drill-ad-stats">
@@ -172,11 +211,31 @@ export function CampanhaDrillDown({ slug, preset, campaign_id, campaign_name, on
                     );
                   })}
                 </div>
+                <ComparativoAds ads={g.ads} adset_name={g.adset_name} />
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Modal de confirmação de pause/resume (ad ou adset) */}
+      {actions.confirming && (
+        <ConfirmModal
+          entity_type={actions.confirming.entity_type}
+          entity_name={actions.confirming.name}
+          action={actions.confirming.action}
+          loading={actions.pending != null}
+          onCancel={() => actions.setConfirming(null)}
+          onConfirm={async () => {
+            const { entity_type, entity_id, action } = actions.confirming!;
+            const r = await actions.doAction(entity_type, entity_id, action);
+            if (r.ok) setReloadKey((k) => k + 1);
+          }}
+        />
+      )}
+
+      {/* Toast de sucesso/erro */}
+      <ToastView toast={actions.toast} />
     </div>
   );
 }

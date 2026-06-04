@@ -64,7 +64,7 @@ export interface ApiSaldoResponse {
   clients: ApiSaldoRow[];
 }
 
-export type TabKey = 'resumo' | 'campanhas' | 'criativos' | 'demografia';
+export type TabKey = 'resumo' | 'campanhas' | 'criativos' | 'demografia' | 'favoritos';
 
 export interface TabDef {
   key: TabKey;
