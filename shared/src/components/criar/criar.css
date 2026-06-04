@@ -564,6 +564,47 @@
   font: 500 12px/1 var(--c-font); color: var(--c-muted);
 }
 .criar-creative-input { display: none; }
+/* ── WizardModal — overlay full-screen ────────────────────── */
+.criar-modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: color-mix(in srgb, var(--c-ink, #2A211C) 55%, transparent);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  animation: criar-modal-in 0.18s ease-out;
+}
+@keyframes criar-modal-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.criar-modal-panel {
+  position: relative;
+  width: 100%; max-width: 1180px;
+  background: var(--c-bg, #F3ECE2);
+  border-radius: 16px;
+  box-shadow: 0 24px 80px color-mix(in srgb, var(--c-ink, #2A211C) 40%, transparent);
+  animation: criar-modal-pop 0.2s ease-out;
+}
+@keyframes criar-modal-pop {
+  from { transform: translateY(14px) scale(0.985); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.criar-modal-x {
+  position: absolute; top: 14px; right: 16px; z-index: 5;
+  width: 36px; height: 36px; border-radius: 999px;
+  border: 1px solid var(--c-line, #E6DAC8);
+  background: var(--c-card, #fff); color: var(--c-ink, #2A211C);
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, transform 0.15s;
+}
+.criar-modal-x:hover { background: var(--c-card2, #FBF7F1); transform: scale(1.06); }
+@media (max-width: 640px) {
+  .criar-modal-overlay { padding: 0; }
+  .criar-modal-panel { border-radius: 0; min-height: 100vh; }
+}
+
 .criar-creative-progress {
   width: 100%; max-width: 280px; height: 6px;
   background: var(--c-line); border-radius: 999px; overflow: hidden;
@@ -572,6 +613,14 @@
 .criar-creative-progress-fill {
   height: 100%; background: var(--c-accent);
   transition: width 0.2s ease-out;
+}
+.criar-creative-progress-fill.is-indeterminate {
+  width: 40%;
+  animation: criar-indeterminate 1.1s ease-in-out infinite;
+}
+@keyframes criar-indeterminate {
+  0% { margin-left: -40%; }
+  100% { margin-left: 100%; }
 }
 .criar-creative-preview {
   display: flex; flex-direction: column; gap: 10px;

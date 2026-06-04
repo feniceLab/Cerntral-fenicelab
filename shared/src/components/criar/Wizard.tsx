@@ -24,6 +24,8 @@ export interface WizardProps {
   initial?: DraftCampanha;
   userRole?: 'admin_fenice' | 'cliente';
   userEmail?: string;
+  /** auth.users.id (RBAC backend). Obrigatório pra salvar/submeter. */
+  userAuthId?: string;
   /** Voltar pra lista/tela anterior. */
   onClose?: () => void;
   /** Callback após aprovar+publicar (só admin). */
@@ -37,6 +39,7 @@ export function Wizard({
   initial,
   userRole,
   userEmail,
+  userAuthId,
   onClose,
   onApproveAndPublish,
 }: WizardProps) {
@@ -50,6 +53,8 @@ export function Wizard({
     slug,
     initialDraftId,
     initial: initialDraft,
+    actorAuthId: userAuthId,
+    actorEmail: userEmail,
   });
 
   const [step, setStep] = useState<WizardStepKey>('objetivo');

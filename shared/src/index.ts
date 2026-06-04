@@ -103,6 +103,7 @@ export type {
 export {
   Wizard,
   WizardShell,
+  WizardModal,
   ProgressBar as CriarProgressBar,
   EstimativaCard,
   GuardrailToast,
@@ -121,6 +122,7 @@ export {
 export type {
   WizardProps,
   WizardShellProps,
+  WizardModalProps,
   WizardStepKey,
   ObjetivoKey,
   ObjetivoOption,

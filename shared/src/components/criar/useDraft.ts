@@ -16,6 +16,9 @@ interface UseDraftOptions {
   initialDraftId?: string;
   /** Permite injetar um draft inicial — útil pra carregar de URL/admin. */
   initial?: DraftCampanha;
+  /** Identificação do ator (RBAC backend). Obrigatório pra salvar/submeter. */
+  actorAuthId?: string;
+  actorEmail?: string;
 }
 
 interface UseDraftReturn {
@@ -39,7 +42,7 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export function useDraft({ apiBase, slug, initialDraftId, initial }: UseDraftOptions): UseDraftReturn {
+export function useDraft({ apiBase, slug, initialDraftId, initial, actorAuthId, actorEmail }: UseDraftOptions): UseDraftReturn {
   const [draft, setDraft] = useState<DraftCampanha>(() => {
     if (initial) return initial;
     // tenta restaurar do localStorage
@@ -67,9 +70,18 @@ export function useDraft({ apiBase, slug, initialDraftId, initial }: UseDraftOpt
   }, [draft, slug, initialDraftId]);
 
   const save = useCallback(async () => {
+    if (!actorAuthId) {
+      // Sem actor não vale chamar backend (vai dar 400) — fica só local.
+      setStatus({ saving: false, saved_at: null, error: 'sem_auth — salvo só localmente' });
+      return;
+    }
     setStatus((s) => ({ ...s, saving: true, error: null }));
     try {
-      const payload = draftRef.current;
+      const payload = {
+        ...draftRef.current,
+        actor_auth_id: actorAuthId,
+        actor_email: actorEmail,
+      };
       const resp = await fetchJSON<{ ok: boolean; draft: DraftCampanha }>(
         `${apiBase}/api/campaign/draft`,
         { method: 'POST', body: JSON.stringify(payload) }
@@ -85,26 +97,35 @@ export function useDraft({ apiBase, slug, initialDraftId, initial }: UseDraftOpt
         error: (err as Error).message || 'Falha ao salvar',
       });
     }
-  }, [apiBase]);
+  }, [apiBase, actorAuthId, actorEmail]);
 
   const reload = useCallback(async () => {
     const id = draftRef.current.id || initialDraftId;
     if (!id) return;
+    if (!actorAuthId) return;
     try {
       const resp = await fetchJSON<{ ok: boolean; draft: DraftCampanha }>(
-        `${apiBase}/api/campaign/draft/${id}`
+        `${apiBase}/api/campaign/draft/${id}?actor_auth_id=${encodeURIComponent(actorAuthId)}`
       );
       if (resp.draft) setDraft(resp.draft);
     } catch (err) {
       setStatus((s) => ({ ...s, error: (err as Error).message || 'Falha ao recarregar' }));
     }
-  }, [apiBase, initialDraftId]);
+  }, [apiBase, initialDraftId, actorAuthId]);
 
   const submit = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
+    if (!actorAuthId) {
+      return { ok: false, error: 'Você precisa estar logada pra submeter.' };
+    }
     try {
       // salva uma última vez antes de submeter
       await save();
-      const payload = { id: draftRef.current.id, slug: draftRef.current.slug };
+      const payload = {
+        id: draftRef.current.id,
+        slug: draftRef.current.slug,
+        actor_auth_id: actorAuthId,
+        actor_email: actorEmail,
+      };
       await fetchJSON<{ ok: boolean }>(`${apiBase}/api/campaign/submit`, {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -114,7 +135,7 @@ export function useDraft({ apiBase, slug, initialDraftId, initial }: UseDraftOpt
     } catch (err) {
       return { ok: false, error: (err as Error).message || 'Falha ao submeter' };
     }
-  }, [apiBase, save]);
+  }, [apiBase, save, actorAuthId, actorEmail]);
 
   return { draft, setDraft, status, save, reload, submit };
 }

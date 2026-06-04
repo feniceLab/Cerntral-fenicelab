@@ -6,9 +6,12 @@ interface Props {
   metricas: MetricasSobral;
   curr: ApiClientRow;
   periodoLabel: string;
+  /** CTA contextual — quando KILL, oferece criar variante. */
+  onCriar?: (motivacao?: string) => void;
 }
 
-export function HeroLucro({ metricas, curr, periodoLabel }: Props) {
+export function HeroLucro({ metricas, curr, periodoLabel, onCriar }: Props) {
+  const isKill = metricas.decisao === 'KILL';
   return (
     <div className={`perf-hero perf-hero--${metricas.semaforo} perf-hero--dec-${metricas.decisao.toLowerCase()}`}>
       <div className="perf-hero-left">
@@ -21,6 +24,15 @@ export function HeroLucro({ metricas, curr, periodoLabel }: Props) {
           ({metricas.cpaPctTicket.toFixed(0)}% do ticket)
           {curr.purchases > 0 && ` · ${curr.purchases} pedidos`}
         </div>
+        {isKill && onCriar && (
+          <button
+            type="button"
+            className="perf-hero-cta perf-no-print"
+            onClick={() => onCriar('Substituir campanha em fadiga (decisão Sobral: KILL)')}
+          >
+            ＋ Criar campanha nova pra substituir
+          </button>
+        )}
       </div>
       <div className="perf-hero-right">
         <div className={`perf-hero-badge perf-hero-badge--${metricas.decisao.toLowerCase()}`}>

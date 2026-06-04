@@ -18,6 +18,8 @@ export function CreativeUpload({ apiBase, slug, value, onChange }: CreativeUploa
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  /** Fase pós-upload: servidor mandando pro Meta (sem progresso mensurável). */
+  const [processando, setProcessando] = useState(false);
 
   const upload = async (file: File) => {
     setError(null);
@@ -27,6 +29,7 @@ export function CreativeUpload({ apiBase, slug, value, onChange }: CreativeUploa
     }
 
     setUploading(true);
+    setProcessando(false);
     setProgress(0);
 
     try {
@@ -38,20 +41,31 @@ export function CreativeUpload({ apiBase, slug, value, onChange }: CreativeUploa
       const previewUrl = URL.createObjectURL(file);
 
       // Upload via XHR pra ter progress
-      const result = await new Promise<{ image_hash?: string; video_id?: string }>((resolve, reject) => {
+      const result = await new Promise<{ ok?: boolean; image_hash?: string; video_id?: string; error?: string }>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
+        xhr.timeout = 90_000; // 90s — vídeo grande no Meta pode demorar
         xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setProgress(pct);
+            // Bytes 100% enviados → entra fase "processando no Meta"
+            if (pct >= 100) setProcessando(true);
+          }
         };
+        xhr.upload.onload = () => setProcessando(true);
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            try { resolve(JSON.parse(xhr.responseText)); }
-            catch { reject(new Error('Resposta inválida do servidor')); }
+            try {
+              const json = JSON.parse(xhr.responseText);
+              if (json.ok === false) reject(new Error(json.error || 'Upload rejeitado pelo servidor'));
+              else resolve(json);
+            } catch { reject(new Error('Resposta inválida do servidor')); }
           } else {
             reject(new Error(`HTTP ${xhr.status}: ${xhr.responseText || xhr.statusText}`));
           }
         };
-        xhr.onerror = () => reject(new Error('Falha de rede'));
+        xhr.onerror = () => reject(new Error('Falha de rede ao enviar'));
+        xhr.ontimeout = () => reject(new Error('Tempo esgotado (90s). Tente um arquivo menor ou comprima o vídeo.'));
         xhr.open('POST', `${apiBase}/api/creative/upload`);
         xhr.send(form);
       });
@@ -67,6 +81,7 @@ export function CreativeUpload({ apiBase, slug, value, onChange }: CreativeUploa
       setError((err as Error).message || 'Falha no upload');
     } finally {
       setUploading(false);
+      setProcessando(false);
       setProgress(0);
     }
   };
@@ -119,11 +134,19 @@ export function CreativeUpload({ apiBase, slug, value, onChange }: CreativeUploa
         >
           {uploading ? (
             <>
-              <div className="criar-creative-icon" aria-hidden>↑</div>
-              <div className="criar-creative-cta">Enviando… {progress}%</div>
-              <div className="criar-creative-progress">
-                <div className="criar-creative-progress-fill" style={{ width: `${progress}%` }} />
+              <div className="criar-creative-icon" aria-hidden>{processando ? '⟳' : '↑'}</div>
+              <div className="criar-creative-cta">
+                {processando ? 'Processando no Meta…' : `Enviando… ${progress}%`}
               </div>
+              <div className="criar-creative-progress">
+                <div
+                  className={`criar-creative-progress-fill${processando ? ' is-indeterminate' : ''}`}
+                  style={processando ? undefined : { width: `${progress}%` }}
+                />
+              </div>
+              {processando && (
+                <div className="criar-creative-sub">Pode levar até 1 min pra vídeos.</div>
+              )}
             </>
           ) : (
             <>

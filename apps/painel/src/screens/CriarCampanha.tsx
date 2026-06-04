@@ -30,7 +30,7 @@ const readDraftIdFromHash = (): string | undefined => {
 };
 
 export function CriarCampanha({ initialSlug, draftId, onDone }: CriarCampanhaProps) {
-  const { role, email, clienteSlug, nomeExibicao } = useAuth();
+  const { role, email, clienteSlug, nomeExibicao, user } = useAuth();
   const isAdmin = role === 'admin_fenice';
 
   const slugFromUrl = readSlugFromHash();
@@ -104,6 +104,7 @@ export function CriarCampanha({ initialSlug, draftId, onDone }: CriarCampanhaPro
           initialDraftId={draftId || draftFromUrl}
           userRole={role || undefined}
           userEmail={email || nomeExibicao || undefined}
+          userAuthId={user?.id}
           onClose={onDone}
           onApproveAndPublish={handleApproveAndPublish}
         />

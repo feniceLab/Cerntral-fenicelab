@@ -19,7 +19,7 @@ export interface PerformanceProps {
 export function Performance({ cliente, onBack }: PerformanceProps) {
   const theme = themeBySlug(cliente.slug, cliente.cor);
   const logo = cliente.logo ? cliente.logo : null;
-  const { role, email, nomeExibicao } = useAuth();
+  const { role, email, nomeExibicao, user } = useAuth();
   const actor = nomeExibicao || email || undefined;
 
   return (
@@ -69,6 +69,7 @@ export function Performance({ cliente, onBack }: PerformanceProps) {
           surface="painel"
           userRole={role ?? undefined}
           userEmail={actor}
+          userAuthId={user?.id}
         />
       </div>
     </div>

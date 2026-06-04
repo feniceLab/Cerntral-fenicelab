@@ -1,10 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ClienteTheme } from '../../clientes/themes';
 import { margemDoCliente } from '../../trafego';
 import type { TabKey, TabDef } from './types';
 import { PERIODS, dursDias, ageString, timeUntilRefresh } from './format';
+import { WizardModal } from '../criar/WizardModal';
+import type { VerticalKey } from '../criar/templates';
 
 const REFRESH_MS = 5 * 60 * 1000;
+
+/** Vertical Sobral por slug (default delivery — maioria dos clientes Fenice é restaurante). */
+const VERTICAL_POR_SLUG: Record<string, VerticalKey> = {
+  arena: 'delivery',
+  suprema: 'delivery',
+  oca: 'delivery',
+  imperio: 'delivery',
+  cotafacil: 'servicos',
+};
+const verticalDoSlug = (slug: string): VerticalKey => VERTICAL_POR_SLUG[slug] || 'delivery';
+
 import { usePerformanceData } from './usePerformanceData';
 import { HeroLucro } from './blocks/HeroLucro';
 import { AlertasList } from './blocks/AlertasList';
@@ -47,6 +60,8 @@ export interface WarRoomShellProps {
   userRole?: 'admin_fenice' | 'cliente';
   /** Identificador do usuário (email ou nome de exibição) pra audit log. */
   userEmail?: string;
+  /** auth.users.id — habilita o botão "Criar campanha" embedded (RBAC backend). */
+  userAuthId?: string;
 }
 
 /**
@@ -55,13 +70,21 @@ export interface WarRoomShellProps {
  */
 export function WarRoomShell({
   slug, clienteNome, logo = null, theme, surface = 'portal',
-  margem, apiBase, userRole, userEmail,
+  margem, apiBase, userRole, userEmail, userAuthId,
 }: WarRoomShellProps) {
   const apiBaseResolved = apiBase ?? ((import.meta as any).env?.VITE_TRAFEGO_URL || '');
   const margemCliente = margem ?? margemDoCliente(slug);
   // RBAC: se userRole não foi passado, mantém comportamento legado (tudo true).
   const canPause = userRole === undefined ? true : userRole === 'admin_fenice' || userRole === 'cliente';
   const canEscalate = userRole === undefined ? true : userRole === 'admin_fenice';
+  // Criar campanha embedded — só habilita se temos auth_id (senão backend rejeita).
+  const podeCriar = !!userAuthId;
+  const [criarOpen, setCriarOpen] = useState(false);
+  const [criarMotivacao, setCriarMotivacao] = useState<string | undefined>(undefined);
+  const abrirCriar = useCallback((motivacao?: string) => {
+    setCriarMotivacao(motivacao);
+    setCriarOpen(true);
+  }, []);
   const [tab, setTab] = useState<TabKey>(() => {
     const h = (typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : '') as TabKey;
     return TABS.some((t) => t.key === h) ? h : 'resumo';
@@ -174,6 +197,16 @@ export function WarRoomShell({
           ))}
         </div>
         <div className="perf-toolbar-right">
+          {podeCriar && (
+            <button
+              type="button"
+              className="perf-criar-btn"
+              onClick={() => abrirCriar()}
+              title="Criar nova campanha"
+            >
+              <span aria-hidden>＋</span> Nova campanha
+            </button>
+          )}
           <div className="perf-period" role="tablist" aria-label="Período">
             {PERIODS.map((p) => (
               <button
@@ -218,10 +251,18 @@ export function WarRoomShell({
             slug={slug}
             margemCliente={margemCliente}
             periodoLabel={opt.label}
+            onCriar={podeCriar ? abrirCriar : undefined}
           />
         )}
         {tab === 'campanhas' && (
           <div className="perf-tab-content">
+            {podeCriar && (
+              <div className="perf-campanhas-bar perf-no-print">
+                <button type="button" className="perf-criar-btn" onClick={() => abrirCriar()}>
+                  <span aria-hidden>＋</span> Nova campanha
+                </button>
+              </div>
+            )}
             <Campanhas
               slug={slug}
               preset={opt.preset}
@@ -253,18 +294,34 @@ export function WarRoomShell({
       <div className="perf-footer-note perf-no-print">
         Δ vs período anterior · Refresh 5 min · Margem operacional {(margemCliente * 100).toFixed(0)}% (config Sobral) · Dados Meta Graph v23
       </div>
+
+      {podeCriar && (
+        <WizardModal
+          open={criarOpen}
+          slug={slug}
+          apiBase={apiBaseResolved}
+          prefillVertical={verticalDoSlug(slug)}
+          prefillMotivacao={criarMotivacao}
+          userRole={userRole}
+          userEmail={userEmail}
+          userAuthId={userAuthId}
+          onClose={() => setCriarOpen(false)}
+          onSubmitted={() => { data.reload(); }}
+        />
+      )}
     </div>
   );
 }
 
 /** Layout da tab Resumo: grid 12 col responsivo. */
 function ResumoLayout({
-  data, slug, margemCliente, periodoLabel,
+  data, slug, margemCliente, periodoLabel, onCriar,
 }: {
   data: ReturnType<typeof usePerformanceData>;
   slug: string;
   margemCliente: number;
   periodoLabel: string;
+  onCriar?: (motivacao?: string) => void;
 }) {
   const { curr, prev, saldo, metricas, diasCobertura, alertas, period } = data;
   if (!metricas || !curr) {
@@ -275,10 +332,10 @@ function ResumoLayout({
     <div className="perf-grid">
       {/* Linha 1 · Hero (8) + Alertas (4) */}
       <section className="perf-grid-hero">
-        <HeroLucro metricas={metricas} curr={curr} periodoLabel={periodoLabel} />
+        <HeroLucro metricas={metricas} curr={curr} periodoLabel={periodoLabel} onCriar={onCriar} />
       </section>
       <aside className="perf-grid-alerts">
-        <AlertasList alertas={alertas} />
+        <AlertasList alertas={alertas} onCriar={onCriar} />
       </aside>
 
       {/* Linha 2 · KPIs (8) + Saldo (4) */}

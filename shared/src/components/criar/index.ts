@@ -3,6 +3,8 @@ export { Wizard } from './Wizard';
 export type { WizardProps } from './Wizard';
 export { WizardShell } from './WizardShell';
 export type { WizardShellProps } from './WizardShell';
+export { WizardModal } from './WizardModal';
+export type { WizardModalProps } from './WizardModal';
 
 export { ProgressBar } from './ProgressBar';
 export { EstimativaCard } from './EstimativaCard';
