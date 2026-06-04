@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { SkeletonTable } from './Skeletons';
 import { CampanhaDrillDown } from './CampanhaDrillDown';
+import { AuditLog } from './AuditLog';
 import { nivelRoas } from '../../../trafego';
 
 interface CampaignRow {
@@ -279,6 +280,9 @@ export function Campanhas({ slug, preset, since, until, margemCliente }: Props) 
           })}
         </div>
       </div>
+
+      {/* AUDIT LOG — histórico de pausas/reativações/budgets desse cliente */}
+      <AuditLog slug={slug} limit={20} />
 
       {/* DRILL-DOWN — modal com adsets+ads da campanha clicada */}
       {drillCampaign && (

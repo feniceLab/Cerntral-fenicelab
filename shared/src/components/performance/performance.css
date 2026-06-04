@@ -917,3 +917,42 @@
   .perf-drill-ad { grid-template-columns: 60px 1fr; }
   .perf-drill-ad-thumb { width: 60px; height: 60px; }
 }
+
+/* ============================================================
+   Audit log — histórico de ações operacionais
+   ============================================================ */
+.perf-audit { /* herda .perf-block */ }
+.perf-audit-list { display: flex; flex-direction: column; gap: 6px; }
+.perf-audit-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center; gap: 12px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.02);
+  border-left: 3px solid var(--p-faint);
+  font: 500 12.5px/1.4 var(--p-font-body);
+  color: var(--p-ink);
+}
+.perf-audit-row--ok { border-left-color: var(--p-ok); }
+.perf-audit-row--bad { border-left-color: var(--p-bad); background: rgba(247,113,113,.04); }
+.perf-audit-icon {
+  font-size: 16px; text-align: center;
+}
+.perf-audit-body { min-width: 0; }
+.perf-audit-line { color: var(--p-ink); }
+.perf-audit-line strong { color: var(--p-accent); font-weight: 700; }
+.perf-audit-line em {
+  font-style: normal; color: var(--p-muted);
+  display: inline-block; max-width: 360px;
+  vertical-align: bottom; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.perf-audit-error {
+  font: 500 11px/1.4 var(--p-font-body);
+  color: var(--p-bad); margin-top: 2px;
+}
+.perf-audit-ts {
+  font: 500 11px/1 var(--p-font-body); color: var(--p-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

@@ -26,6 +26,7 @@ export { Criativos } from './blocks/Criativos';
 export { Breakdowns } from './blocks/Breakdowns';
 export { ComparativoMensal } from './blocks/ComparativoMensal';
 export { ComparativoAds } from './blocks/ComparativoAds';
+export { AuditLog } from './blocks/AuditLog';
 export { FavoritoStar } from './blocks/FavoritoStar';
 export { FavoritosCriativos } from './blocks/FavoritosCriativos';
 export { useFavoritos } from './useFavoritos';

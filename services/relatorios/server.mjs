@@ -984,6 +984,44 @@ async function fetchBreakdown({ slug, breakdowns, since, until, preset } = {}) {
 // Valida que a entidade pertence ao ad_account_id do slug antes de mexer.
 // budget_up/budget_down só pra campaign. Requer token Meta com scope ads_management.
 // ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────────
+// Audit log — JSONL append-only em data/audit-log.jsonl
+// Toda chamada de postEntityAction grava 1 linha (ok ou erro).
+// ──────────────────────────────────────────────────────────────────────────────
+const AUDIT_LOG_PATH = path.join(__dirname, 'data', 'audit-log.jsonl');
+
+async function logAuditEntry(entry) {
+  try {
+    const line = JSON.stringify({ ts: new Date().toISOString(), ...entry }) + '\n';
+    await fs.appendFile(AUDIT_LOG_PATH, line, 'utf-8');
+  } catch (e) {
+    console.warn('audit log append failed:', e.message);
+  }
+}
+
+async function readAuditLog({ slug, entity_type, limit = 50 } = {}) {
+  try {
+    const raw = await fs.readFile(AUDIT_LOG_PATH, 'utf-8');
+    const lines = raw.split('\n').filter(Boolean);
+    const lim = Math.min(Math.max(1, Number(limit) || 50), 500);
+    const recent = lines.slice(-lim - 100);  // pega mais do que precisa; filtra; corta no fim
+    const parsed = [];
+    for (let i = recent.length - 1; i >= 0; i--) {
+      try {
+        const o = JSON.parse(recent[i]);
+        if (slug && o.slug !== slug) continue;
+        if (entity_type && o.entity_type !== entity_type) continue;
+        parsed.push(o);
+        if (parsed.length >= lim) break;
+      } catch {}
+    }
+    return { ok: true, entries: parsed };
+  } catch (e) {
+    if (e.code === 'ENOENT') return { ok: true, entries: [] };
+    return { ok: false, error: e.message, entries: [] };
+  }
+}
+
 async function postEntityAction({ slug, entity_type, entity_id, action, factor }) {
   if (!slug || !entity_type || !entity_id || !action) return { ok: false, error: 'missing_params' };
   if (!['campaign', 'adset', 'ad'].includes(entity_type)) {
@@ -1048,10 +1086,27 @@ async function postEntityAction({ slug, entity_type, entity_id, action, factor }
   }
 }
 
+// Wrapper que faz audit log de cada chamada (sucesso ou erro).
+// Mantém entity_name opcional pra log mais legível.
+async function postEntityActionLogged(payload) {
+  const result = await postEntityAction(payload);
+  await logAuditEntry({
+    slug: payload?.slug || null,
+    entity_type: payload?.entity_type || null,
+    entity_id: payload?.entity_id || payload?.campaign_id || null,
+    entity_name: payload?.entity_name || null,
+    action: payload?.action || null,
+    factor: payload?.factor || null,
+    ok: result.ok,
+    error: result.error || null,
+  });
+  return result;
+}
+
 // Retrocompat: payload antigo { slug, campaign_id, action } → mapeia pra novo formato
 async function postCampaignAction(payload) {
   if (payload && payload.campaign_id && !payload.entity_id) {
-    return postEntityAction({
+    return postEntityActionLogged({
       slug: payload.slug,
       entity_type: 'campaign',
       entity_id: payload.campaign_id,
@@ -1059,7 +1114,7 @@ async function postCampaignAction(payload) {
       factor: payload.factor,
     });
   }
-  return postEntityAction(payload || {});
+  return postEntityActionLogged(payload || {});
 }
 
 const server = http.createServer(async (req, res) => {
@@ -1211,6 +1266,22 @@ const server = http.createServer(async (req, res) => {
         'Access-Control-Allow-Headers': 'Content-Type',
       });
       res.end();
+      return;
+    }
+
+    if (req.url.startsWith('/api/audit-log')) {
+      const u = new URL(req.url, 'http://x');
+      const data = await readAuditLog({
+        slug: u.searchParams.get('slug') || undefined,
+        entity_type: u.searchParams.get('entity_type') || undefined,
+        limit: u.searchParams.get('limit') || undefined,
+      });
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*',
+      });
+      res.end(JSON.stringify(data, null, 2));
       return;
     }
 

@@ -227,8 +227,8 @@ export function CampanhaDrillDown({ slug, preset, campaign_id, campaign_name, on
           loading={actions.pending != null}
           onCancel={() => actions.setConfirming(null)}
           onConfirm={async () => {
-            const { entity_type, entity_id, action } = actions.confirming!;
-            const r = await actions.doAction(entity_type, entity_id, action);
+            const { entity_type, entity_id, action, name } = actions.confirming!;
+            const r = await actions.doAction(entity_type, entity_id, action, name);
             if (r.ok) setReloadKey((k) => k + 1);
           }}
         />

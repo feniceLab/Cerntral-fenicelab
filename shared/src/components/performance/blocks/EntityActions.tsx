@@ -57,13 +57,14 @@ export function useEntityActions(slug: string) {
     entity_type: EntityType,
     entity_id: string,
     action: EntityAction,
+    entity_name?: string,
   ): Promise<{ ok: boolean; error?: string }> => {
     setPending(entity_id);
     try {
       const r = await fetch(`${API_BASE}/api/campaign/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, entity_type, entity_id, action }),
+        body: JSON.stringify({ slug, entity_type, entity_id, action, entity_name }),
       });
       const j = await r.json();
       if (j.ok) {
