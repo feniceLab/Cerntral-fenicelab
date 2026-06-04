@@ -7,16 +7,30 @@ import { Reposicoes } from './screens/Reposicoes';
 import { Relatorios } from './screens/Relatorios';
 import { Performance } from './screens/Performance';
 import { AuditCentral } from './screens/AuditCentral';
+import { CriarCampanha } from './screens/CriarCampanha';
+import { AprovarCampanhas } from './screens/AprovarCampanhas';
+import { Battles } from './screens/Battles';
 import { AuthProvider } from './auth/AuthProvider';
 import { useAuth } from './auth/useAuth';
 import { LoginScreen } from './auth/LoginScreen';
 import './styles.css';
 import './auth/auth.css';
 
-const VIEWS: NavKey[] = ['clientes', 'audit_central', 'dashboard', 'reposicoes', 'relatorios'];
+const VIEWS: NavKey[] = [
+  'clientes',
+  'audit_central',
+  'dashboard',
+  'reposicoes',
+  'relatorios',
+  'criar_campanha',
+  'aprovar_campanhas',
+  'battles',
+];
 const viewFromHash = (): NavKey => {
   const h = window.location.hash.replace(/^#/, '');
-  return (VIEWS as string[]).includes(h) ? (h as NavKey) : 'dashboard';
+  // hash pode vir como "criar_campanha?slug=arena&draft_id=..."
+  const screen = h.split('?')[0];
+  return (VIEWS as string[]).includes(screen) ? (screen as NavKey) : 'dashboard';
 };
 
 const LS_COLLAPSED = 'fenice.sidebar.collapsed';
@@ -98,6 +112,8 @@ function ClienteShell({ clienteSlug }: { clienteSlug: string | null }) {
 
 /** Admin Fenice — shell completo com sidebar. */
 function AdminShell() {
+  const { role } = useAuth();
+  const isAdmin = role === 'admin_fenice';
   const [view, setView] = useState<NavKey>(viewFromHash);
   const [portalCliente, setPortalCliente] = useState<ClienteFenice | null>(null);
 
@@ -129,7 +145,7 @@ function AdminShell() {
   return (
     <div className="fen-pn-stage">
       <div className="fen-pn-frame">
-        <Sidebar view={view} go={go} collapsed={collapsed} mobileOpen={mobileOpen} onToggle={toggleSidebar} />
+        <Sidebar view={view} go={go} collapsed={collapsed} mobileOpen={mobileOpen} onToggle={toggleSidebar} isAdmin={isAdmin} />
         <div
           className={`fen-pn-backdrop${mobileOpen ? ' is-open' : ''}`}
           onClick={() => setMobileOpen(false)}
@@ -159,6 +175,12 @@ function AdminShell() {
             <Reposicoes />
           ) : view === 'relatorios' ? (
             <Relatorios />
+          ) : view === 'criar_campanha' ? (
+            <CriarCampanha onDone={() => go('dashboard')} />
+          ) : view === 'aprovar_campanhas' ? (
+            <AprovarCampanhas />
+          ) : view === 'battles' ? (
+            <Battles />
           ) : (
             <Dashboard />
           )}

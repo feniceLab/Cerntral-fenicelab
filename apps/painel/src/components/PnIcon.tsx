@@ -39,6 +39,9 @@ export const PN_PATHS = {
   refresh: 'M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5',
   file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6ZM14 2v6h6M8 13h8M8 17h6',
   arrowR: 'M5 12h14M13 6l6 6-6 6',
+  // espadas cruzadas — Battles
+  swords:
+    'M14.5 17.5 17 20l3-3-2.5-2.5M14.5 17.5 8 11M14.5 17.5 13 19M9.5 6.5 7 4 4 7l2.5 2.5M9.5 6.5 16 13M9.5 6.5 11 5M3 21l3-3M21 3l-3 3',
 } as const;
 
 export type PnIconName = keyof typeof PN_PATHS;

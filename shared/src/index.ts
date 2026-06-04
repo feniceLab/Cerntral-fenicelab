@@ -76,4 +76,59 @@ export type {
   Alerta,
   AlertaInput,
 } from './trafego';
+
+// Criar campanha — Templates Sobral por vertical + tooltips PT-BR
+// (consumido pelo wizard em central.fenicelab/criar).
+export {
+  TEMPLATES_SOBRAL,
+  VERTICAL_KEYS,
+  TOOLTIPS_GERAL,
+  pickTemplate,
+  getTooltips,
+  validateBudget,
+  suggestDuration,
+} from './components/criar/templates';
+export type {
+  VerticalKey,
+  ObjetivoMeta,
+  OptimizationGoal,
+  CTAType,
+  AudienceSpec,
+  CreativeSpec,
+  SobralTooltips,
+  TemplateSobral,
+} from './components/criar/templates';
+
+// Wizard "Criar campanha" — shell + steps + hooks + utils.
+export {
+  Wizard,
+  WizardShell,
+  ProgressBar as CriarProgressBar,
+  EstimativaCard,
+  GuardrailToast,
+  Tooltip as CriarTooltip,
+  CreativeUpload,
+  useDraft,
+  useEstimativa,
+  validateStep,
+  getValidSteps,
+  TOOLTIPS as CRIAR_TOOLTIPS,
+  tip,
+  STEP_ORDER,
+  STEP_LABELS,
+  OBJETIVOS,
+} from './components/criar';
+export type {
+  WizardProps,
+  WizardShellProps,
+  WizardStepKey,
+  ObjetivoKey,
+  ObjetivoOption,
+  Genero,
+  CriativoUpload,
+  DraftCampanha,
+  EstimativaResposta,
+  ValidacaoResultado,
+  DraftSaveStatus,
+} from './components/criar';
 // ci: re-trigger deploy (rebuild esbuild + steps build/rsync separados)

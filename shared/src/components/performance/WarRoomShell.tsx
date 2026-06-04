@@ -235,7 +235,7 @@ export function WarRoomShell({
         )}
         {tab === 'criativos' && (
           <div className="perf-tab-content">
-            <Criativos slug={slug} preset={opt.preset} />
+            <Criativos slug={slug} preset={opt.preset} actor={userEmail} />
           </div>
         )}
         {tab === 'demografia' && (

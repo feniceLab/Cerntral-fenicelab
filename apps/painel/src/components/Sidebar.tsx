@@ -2,13 +2,23 @@ import { Avatar } from '@fenice/shared';
 import { PnIcon, type PnIconName } from './PnIcon';
 import { SELO_TERRA } from '../assets';
 
-export type NavKey = 'clientes' | 'audit_central' | 'dashboard' | 'reposicoes' | 'relatorios';
+export type NavKey =
+  | 'clientes'
+  | 'audit_central'
+  | 'dashboard'
+  | 'reposicoes'
+  | 'relatorios'
+  | 'criar_campanha'
+  | 'aprovar_campanhas'
+  | 'battles';
 
 interface NavItem {
   key: NavKey;
   icon: PnIconName;
   label: string;
   badge?: number;
+  /** Visível apenas pra admin_fenice. */
+  adminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -28,6 +38,9 @@ const GROUPS: NavGroup[] = [
     label: 'Tráfego Pago',
     items: [
       { key: 'dashboard', icon: 'grid', label: 'Dashboard' },
+      { key: 'battles', icon: 'swords', label: 'Battles' },
+      { key: 'criar_campanha', icon: 'plus', label: 'Criar campanha' },
+      { key: 'aprovar_campanhas', icon: 'checkSq', label: 'Aprovar campanhas', adminOnly: true },
       { key: 'reposicoes', icon: 'refresh', label: 'Reposições' },
       { key: 'relatorios', icon: 'file', label: 'Relatórios' },
     ],
@@ -40,9 +53,11 @@ export interface SidebarProps {
   collapsed?: boolean;
   mobileOpen?: boolean;
   onToggle?: () => void;
+  /** Role do usuário logado — filtra itens admin-only. */
+  isAdmin?: boolean;
 }
 
-export function Sidebar({ view, go, collapsed = false, mobileOpen = false, onToggle }: SidebarProps) {
+export function Sidebar({ view, go, collapsed = false, mobileOpen = false, onToggle, isAdmin = false }: SidebarProps) {
   return (
     <nav className={`fen-pn-side${collapsed ? ' is-collapsed' : ''}${mobileOpen ? ' is-open' : ''}`}>
       <div className="fen-pn-side__brand">
@@ -72,7 +87,7 @@ export function Sidebar({ view, go, collapsed = false, mobileOpen = false, onTog
         <div key={group.label}>
           <div className="fen-pn-side__group">{group.label}</div>
           <div className="fen-pn-side__nav">
-            {group.items.map((item) => {
+            {group.items.filter((it) => !it.adminOnly || isAdmin).map((item) => {
               const on = view === item.key;
               return (
                 <button

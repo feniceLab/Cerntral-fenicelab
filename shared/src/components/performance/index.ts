@@ -23,6 +23,8 @@ export { KpiGrid } from './blocks/KpiGrid';
 export { Tendencia } from './blocks/Tendencia';
 export { Campanhas } from './blocks/Campanhas';
 export { Criativos } from './blocks/Criativos';
+export { CriativoDrillDown } from './blocks/CriativoDrillDown';
+export type { CriativoDrillDownProps } from './blocks/CriativoDrillDown';
 export { Breakdowns } from './blocks/Breakdowns';
 export { ComparativoMensal } from './blocks/ComparativoMensal';
 export { ComparativoAds } from './blocks/ComparativoAds';

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FavoritoStar } from './FavoritoStar';
 import { SkeletonTable } from './Skeletons';
+import { CriativoDrillDown } from './CriativoDrillDown';
 
 interface AdRow {
   ad_id: string;
@@ -10,6 +11,7 @@ interface AdRow {
   campaign_name: string;
   adset_name: string;
   thumbnail_url: string | null;
+  image_url_hd: string | null;
   headline: string | null;
   body: string | null;
   spend_cents: number | null;
@@ -32,12 +34,20 @@ interface Props {
   preset?: string;
   since?: string;
   until?: string;
+  /** Identificador do usuário pra audit log no drilldown. */
+  actor?: string;
 }
 
-export function Criativos({ slug, preset, since, until }: Props) {
+interface OpenAdState {
+  ad_id: string;
+  ad_name: string;
+}
+
+export function Criativos({ slug, preset, since, until, actor }: Props) {
   const [ads, setAds] = useState<AdRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [openAd, setOpenAd] = useState<OpenAdState | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -66,6 +76,8 @@ export function Criativos({ slug, preset, since, until }: Props) {
     .slice(-3)
     .reverse();
 
+  const openCriativo = (ad: AdRow) => setOpenAd({ ad_id: ad.ad_id, ad_name: ad.name });
+
   return (
     <div className="perf-block perf-criativos">
       <div className="perf-block-head">
@@ -76,7 +88,7 @@ export function Criativos({ slug, preset, since, until }: Props) {
       </div>
       <div className="perf-criativos-grid">
         {top.map((a) => (
-          <AdCard key={a.ad_id} ad={a} tone="ok" slug={slug} />
+          <AdCard key={a.ad_id} ad={a} tone="ok" slug={slug} onOpen={openCriativo} />
         ))}
       </div>
 
@@ -90,25 +102,71 @@ export function Criativos({ slug, preset, since, until }: Props) {
           </div>
           <div className="perf-criativos-grid">
             {worst.map((a) => (
-              <AdCard key={a.ad_id} ad={a} tone="bad" slug={slug} />
+              <AdCard key={a.ad_id} ad={a} tone="bad" slug={slug} onOpen={openCriativo} />
             ))}
           </div>
         </>
+      )}
+
+      {openAd && (
+        <CriativoDrillDown
+          slug={slug}
+          preset={preset}
+          ad_id={openAd.ad_id}
+          ad_name={openAd.ad_name}
+          onClose={() => setOpenAd(null)}
+          actor={actor}
+        />
       )}
     </div>
   );
 }
 
-function AdCard({ ad, tone, slug }: { ad: AdRow; tone: 'ok' | 'bad'; slug: string }) {
+function AdCard({
+  ad,
+  tone,
+  slug,
+  onOpen,
+}: {
+  ad: AdRow;
+  tone: 'ok' | 'bad';
+  slug: string;
+  onOpen: (ad: AdRow) => void;
+}) {
+  // Imagem HD tem prioridade (backend novo) com fallback pra thumbnail (atual).
+  const imgSrc = ad.image_url_hd || ad.thumbnail_url;
+
+  const handleClick = () => onOpen(ad);
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onOpen(ad);
+    }
+  };
+
   return (
-    <div className={`perf-ad-card perf-ad-card--${tone}`}>
+    <div
+      className={`perf-ad-card perf-ad-card--${tone} perf-ad-card--clickable`}
+      role="button"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={handleKey}
+      aria-label={`Abrir detalhes do criativo ${ad.name}`}
+    >
       <div className="perf-ad-thumb" style={{ position: 'relative' }}>
-        {ad.thumbnail_url ? (
-          <img src={ad.thumbnail_url} alt={ad.name} loading="lazy" />
+        {imgSrc ? (
+          <img src={imgSrc} alt={ad.name} loading="lazy" />
         ) : (
           <div className="perf-ad-thumb-placeholder">sem thumb</div>
         )}
-        <FavoritoStar slug={slug} adId={ad.ad_id} className="is-overlay" />
+        {/* FavoritoStar intercepta clique pra não abrir o modal */}
+        <span
+          className="perf-ad-fav-wrap"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <FavoritoStar slug={slug} adId={ad.ad_id} className="is-overlay" />
+        </span>
         <div className={`perf-ad-roas perf-ad-roas--${tone}`}>{fmtRoas(ad.roas)}</div>
       </div>
       <div className="perf-ad-info">

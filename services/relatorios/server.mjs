@@ -13,6 +13,21 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
+// === WIZARD CAMPANHAS (auto) ===
+import {
+  handleDraftSave, handleDraftsList, handleDraftGet, handleSubmit,
+  handleApprove, handleReject, handleCreativeUpload, handleAudienceEstimate,
+} from './wizard-helpers.mjs';
+// === CRIATIVOS HD (auto) ===
+import { enrichAdsWithHd, handleAdDetail } from './criativos-hd.mjs';
+// === BATTLE MODE (auto) ===
+import {
+  handleBattleCreate, handleBattleList, handleBattleGet,
+  handleBattleCancel, handleBattleDecidir, handleBattleRevert,
+} from './battle-helpers.mjs';
+import { runBattleCron } from './battle-cron.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -79,6 +94,34 @@ let timeseriesCache = {}; // keyed por slug + período
 let campaignsCache = {}; // keyed por slug + período
 let adsCache = {};        // keyed por slug + período
 let breakdownCache = {};  // keyed por slug + período + breakdown
+
+// === SUPABASE CLIENT (wizard + battle) ===
+const supabase = (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+  ? createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+  : null;
+if (!supabase) {
+  console.warn('⚠️  SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausentes — Wizard/Battle desabilitados');
+}
+
+// Helpers compartilhados pra handlers wizard + battle
+async function readJson(req) {
+  let body = '';
+  for await (const chunk of req) body += chunk;
+  try { return JSON.parse(body || '{}'); } catch { return {}; }
+}
+async function readRawBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
+async function loadMapping() {
+  try {
+    const raw = await fs.readFile(path.join(__dirname, 'data', 'clients-mapping.json'), 'utf-8');
+    return JSON.parse(raw);
+  } catch { return { clients: [] }; }
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // BASIC AUTH (área admin)
@@ -914,7 +957,11 @@ async function fetchAds({ slug, since, until, preset, campaign_id } = {}) {
     error = e.message;
   }
 
-  const result = { updated_at: new Date().toISOString(), slug, period: periodKey, error, ads };
+  // === CRIATIVOS HD (auto) — enriquece ads com image_url_hd/thumb_url_hd
+  const adsEnriched = (!error && ads.length > 0 && c.ad_account_id)
+    ? await enrichAdsWithHd(ads, c.ad_account_id).catch((e) => { console.warn('[ads-hd] fallback:', e.message); return ads; })
+    : ads;
+  const result = { updated_at: new Date().toISOString(), slug, period: periodKey, error, ads: adsEnriched };
   adsCache[periodKey] = { data: result, ts: now };
   return result;
 }
@@ -1378,6 +1425,106 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // === CRIATIVOS HD (auto) — endpoint /api/ad-detail ===
+    if (req.url.startsWith('/api/ad-detail')) {
+      const u = new URL(req.url, 'http://x');
+      await handleAdDetail(req, res, u.searchParams);
+      return;
+    }
+
+    // === WIZARD CAMPANHAS (auto) ===
+    if (req.method === 'OPTIONS' && (
+      req.url.startsWith('/api/campaign/') ||
+      req.url.startsWith('/api/creative/') ||
+      req.url.startsWith('/api/audience/') ||
+      req.url.startsWith('/api/battle/')
+    )) {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      });
+      res.end();
+      return;
+    }
+    if (req.method === 'POST' && req.url === '/api/campaign/draft') {
+      const body = await readJson(req);
+      const mapping = await loadMapping();
+      return handleDraftSave(req, res, body, { supabase, logAuditEntry, notifyBotIfCritical, mapping, readToken });
+    }
+    if (req.method === 'GET' && (req.url === '/api/campaign/drafts' || req.url.startsWith('/api/campaign/drafts?'))) {
+      const u = new URL(req.url, 'http://x');
+      return handleDraftsList(req, res, u.searchParams, { supabase, logAuditEntry, notifyBotIfCritical, readToken });
+    }
+    if (req.method === 'GET' && /^\/api\/campaign\/draft\/[^/?]+/.test(req.url)) {
+      const m = req.url.match(/^\/api\/campaign\/draft\/([^/?]+)/);
+      const id = m ? decodeURIComponent(m[1]) : null;
+      return handleDraftGet(req, res, id, { supabase, logAuditEntry, notifyBotIfCritical, readToken });
+    }
+    if (req.method === 'POST' && req.url === '/api/campaign/submit') {
+      const body = await readJson(req);
+      return handleSubmit(req, res, body, { supabase, logAuditEntry, notifyBotIfCritical, readToken });
+    }
+    if (req.method === 'POST' && req.url === '/api/campaign/approve') {
+      const body = await readJson(req);
+      const mapping = await loadMapping();
+      return handleApprove(req, res, body, { supabase, logAuditEntry, notifyBotIfCritical, mapping, readToken });
+    }
+    if (req.method === 'POST' && req.url === '/api/campaign/reject') {
+      const body = await readJson(req);
+      return handleReject(req, res, body, { supabase, logAuditEntry, notifyBotIfCritical, readToken });
+    }
+    if (req.method === 'POST' && req.url === '/api/creative/upload') {
+      const raw = await readRawBody(req);
+      const mapping = await loadMapping();
+      return handleCreativeUpload(req, res, raw, req.headers['content-type'] || '', { supabase, logAuditEntry, notifyBotIfCritical, mapping, readToken });
+    }
+    if (req.method === 'GET' && (req.url === '/api/audience/estimate' || req.url.startsWith('/api/audience/estimate?'))) {
+      const u = new URL(req.url, 'http://x');
+      const mapping = await loadMapping();
+      return handleAudienceEstimate(req, res, u.searchParams, { supabase, logAuditEntry, notifyBotIfCritical, mapping, readToken });
+    }
+
+    // === BATTLE MODE (auto) ===
+    if (req.method === 'POST' && req.url === '/api/battle/create') {
+      const body = await readJson(req);
+      const mapping = await loadMapping();
+      return handleBattleCreate(req, res, body, { supabase, mapping, logAuditEntry, notifyBotIfCritical, readToken });
+    }
+    if (req.method === 'GET' && (req.url === '/api/battle/list' || req.url.startsWith('/api/battle/list?'))) {
+      const u = new URL(req.url, 'http://x');
+      return handleBattleList(req, res, u.searchParams, { supabase });
+    }
+    {
+      const battleMatch = req.url.match(/^\/api\/battle\/([0-9a-f-]{8,})(\/(cancel|decidir|revert))?(\?.*)?$/);
+      if (battleMatch) {
+        const battleId = battleMatch[1];
+        const action = battleMatch[3];
+        const mapping = await loadMapping();
+        if (req.method === 'GET' && !action) {
+          return handleBattleGet(req, res, battleId, { supabase, mapping, readToken });
+        }
+        if (req.method === 'POST' && action === 'cancel') {
+          const body = await readJson(req);
+          return handleBattleCancel(req, res, battleId, body, { supabase, logAuditEntry, notifyBotIfCritical });
+        }
+        if (req.method === 'POST' && action === 'decidir') {
+          const body = await readJson(req);
+          return handleBattleDecidir(req, res, battleId, body, { supabase, mapping, logAuditEntry, notifyBotIfCritical, readToken });
+        }
+        if (req.method === 'POST' && action === 'revert') {
+          const body = await readJson(req);
+          return handleBattleRevert(req, res, battleId, body, { supabase, mapping, logAuditEntry, notifyBotIfCritical, readToken });
+        }
+      }
+    }
+    if (req.method === 'POST' && req.url === '/api/battle/cron/run') {
+      const mapping = await loadMapping();
+      const r = await runBattleCron({ supabase, mapping, logAuditEntry, notifyBotIfCritical, readToken }).catch((e) => ({ ok: false, error: e.message }));
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      return res.end(JSON.stringify(r, null, 2));
+    }
+
     if (req.url.startsWith('/api/breakdown')) {
       const u = new URL(req.url, 'http://x');
       const data = await fetchBreakdown({
@@ -1415,6 +1562,20 @@ const server = http.createServer(async (req, res) => {
     }
   }
 });
+
+// === BATTLE MODE CRON (auto) — roda a cada 6h, primeira após 60s do startup ===
+if (supabase) {
+  const BATTLE_CRON_INTERVAL_MS = 6 * 3600 * 1000;
+  setTimeout(async () => {
+    const mapping = await loadMapping();
+    runBattleCron({ supabase, mapping, logAuditEntry, notifyBotIfCritical, readToken }).catch((e) => console.error('[battle-cron] erro:', e.message));
+  }, 60_000);
+  setInterval(async () => {
+    const mapping = await loadMapping();
+    runBattleCron({ supabase, mapping, logAuditEntry, notifyBotIfCritical, readToken }).catch((e) => console.error('[battle-cron] erro:', e.message));
+  }, BATTLE_CRON_INTERVAL_MS);
+  console.log('[battle-cron] agendado a cada 6h');
+}
 
 server.listen(PORT, () => {
   console.log('━'.repeat(60));
