@@ -1,0 +1,124 @@
+import { useEffect, useState } from 'react';
+
+interface AdRow {
+  ad_id: string;
+  name: string;
+  status: string | null;
+  effective_status: string | null;
+  campaign_name: string;
+  adset_name: string;
+  thumbnail_url: string | null;
+  headline: string | null;
+  body: string | null;
+  spend_cents: number | null;
+  revenue_cents: number | null;
+  purchases: number | null;
+  roas: number | null;
+  impressions: number | null;
+  ctr: number | null;
+  link_clicks: number | null;
+}
+
+const API_BASE = (import.meta as any).env?.VITE_TRAFEGO_URL || '';
+
+const fmtBRL = (cents: number | null) =>
+  cents == null ? '—' : 'R$ ' + (cents / 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+const fmtRoas = (n: number | null) => (n == null ? '—' : n.toFixed(2) + '×');
+
+interface Props {
+  slug: string;
+  preset?: string;
+  since?: string;
+  until?: string;
+}
+
+export function Criativos({ slug, preset, since, until }: Props) {
+  const [ads, setAds] = useState<AdRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setErr(null);
+    const params = new URLSearchParams({ slug });
+    if (since && until) { params.set('since', since); params.set('until', until); }
+    else if (preset) params.set('preset', preset);
+    fetch(`${API_BASE}/api/ads?${params}`, { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.error) setErr(d.error);
+        else setAds(d.ads || []);
+      })
+      .catch((e) => setErr(e.message))
+      .finally(() => setLoading(false));
+  }, [slug, preset, since, until]);
+
+  if (loading) return <div className="rep-block-loading">Carregando criativos...</div>;
+  if (err) return <div className="rep-empty">Criativos indisponíveis: {err}</div>;
+  if (ads.length === 0) return null;
+
+  const top = ads.filter((a) => (a.purchases || 0) > 0).slice(0, 4);
+  // worst: ads ativos com gasto >R$ 50 e ROAS baixo
+  const worst = ads
+    .filter((a) => (a.spend_cents || 0) > 5000 && (a.roas || 0) < 2)
+    .slice(-3)
+    .reverse();
+
+  return (
+    <div className="rep-block rep-criativos">
+      <div className="rep-block-head">
+        <div>
+          <div className="rep-section-kicker">Criativos · Pareto</div>
+          <div className="rep-section-title">Top 4 · o que está puxando</div>
+        </div>
+      </div>
+      <div className="rep-criativos-grid">
+        {top.map((a) => (
+          <AdCard key={a.ad_id} ad={a} tone="ok" />
+        ))}
+      </div>
+
+      {worst.length > 0 && (
+        <>
+          <div className="rep-block-head" style={{ marginTop: 24 }}>
+            <div>
+              <div className="rep-section-kicker">Atenção</div>
+              <div className="rep-section-title">Queimando dinheiro · candidatos a pausar</div>
+            </div>
+          </div>
+          <div className="rep-criativos-grid">
+            {worst.map((a) => (
+              <AdCard key={a.ad_id} ad={a} tone="bad" />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AdCard({ ad, tone }: { ad: AdRow; tone: 'ok' | 'bad' }) {
+  return (
+    <div className={`rep-ad-card rep-ad-card--${tone}`}>
+      <div className="rep-ad-thumb">
+        {ad.thumbnail_url ? (
+          <img src={ad.thumbnail_url} alt={ad.name} loading="lazy" />
+        ) : (
+          <div className="rep-ad-thumb-placeholder">sem thumb</div>
+        )}
+        <div className={`rep-ad-roas rep-ad-roas--${tone}`}>{fmtRoas(ad.roas)}</div>
+      </div>
+      <div className="rep-ad-info">
+        <div className="rep-ad-name" title={ad.name}>{ad.name}</div>
+        {ad.headline && <div className="rep-ad-headline">{ad.headline}</div>}
+        {ad.body && <div className="rep-ad-body">{ad.body.slice(0, 120)}{ad.body.length > 120 ? '…' : ''}</div>}
+        <div className="rep-ad-metrics">
+          <span>{fmtBRL(ad.spend_cents)} gasto</span>
+          <span>·</span>
+          <span>{ad.purchases ?? 0} compras</span>
+          {ad.ctr != null && <><span>·</span><span>CTR {ad.ctr.toFixed(2)}%</span></>}
+        </div>
+      </div>
+    </div>
+  );
+}

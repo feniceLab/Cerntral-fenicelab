@@ -7,6 +7,11 @@ import {
   type Alerta,
   type MetricasSobral,
 } from '@fenice/shared';
+import { Tendencia } from './blocks/Tendencia';
+import { Campanhas } from './blocks/Campanhas';
+import { Criativos } from './blocks/Criativos';
+import { Breakdowns } from './blocks/Breakdowns';
+import { ComparativoMensal } from './blocks/ComparativoMensal';
 import './relatorio.css';
 
 // ============================================================
@@ -439,6 +444,21 @@ export function RelatorioLive({ slug, clienteNome, logo, theme }: RelatorioLiveP
             diasPeriodo={dursDias(period)}
           />
         )}
+
+        {/* ── BLOCO 4 · TENDÊNCIA dia a dia ── */}
+        <Tendencia slug={slug} preset={opt.preset} margemCliente={margemCliente} />
+
+        {/* ── BLOCO 10 + 5 · SUGESTÕES SOBRAL + CAMPANHAS ── */}
+        <Campanhas slug={slug} preset={opt.preset} margemCliente={margemCliente} />
+
+        {/* ── BLOCO 6 · CRIATIVOS top/worst ── */}
+        <Criativos slug={slug} preset={opt.preset} />
+
+        {/* ── BLOCO 7 · BREAKDOWNS (idade/gen/placement/DMA/país) ── */}
+        <Breakdowns slug={slug} preset={opt.preset} />
+
+        {/* ── BLOCO 11 · COMPARATIVO MENSAL últimos 6 meses ── */}
+        <ComparativoMensal slug={slug} margemCliente={margemCliente} monthsBack={6} />
 
         <div className="rep-footer-note">
           Δ comparado ao período anterior equivalente · Atualiza a cada 5 min · Margem operacional {(margemCliente * 100).toFixed(0)}% (config Sobral)
