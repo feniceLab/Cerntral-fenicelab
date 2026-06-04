@@ -54,6 +54,9 @@ export type { ClienteFenice, ClienteStatus } from './clientes/fenice';
 export { CLIENTE_THEMES, themeBySlug, themeFromCor } from './clientes/themes';
 export type { ClienteTheme } from './clientes/themes';
 
+// Performance war room — dashboard reusável (portal cliente + painel admin).
+export * from './components/performance';
+
 // Tráfego pago — fórmulas Pedro Sobral + Hormozi (delivery BR).
 export {
   computeSobral,
