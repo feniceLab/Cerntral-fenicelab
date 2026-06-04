@@ -973,6 +973,59 @@ async function fetchBreakdown({ slug, breakdowns, since, until, preset } = {}) {
   return result;
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// POST /api/campaign/action — quick action operacional (Pausar/Reativar/+budget)
+// Body JSON: { slug, campaign_id, action: 'pause'|'resume'|'budget_up'|'budget_down' }
+// Valida que campaign_id pertence ao ad_account_id do slug antes de mexer.
+// Requer token Meta com scope ads_management (confirmado em produção).
+// ──────────────────────────────────────────────────────────────────────────────
+async function postCampaignAction({ slug, campaign_id, action, factor }) {
+  if (!slug || !campaign_id || !action) return { ok: false, error: 'missing_params' };
+  const c = await readMappingClient(slug);
+  if (!c) return { ok: false, error: 'cliente_nao_encontrado' };
+  const token = await readToken();
+  if (!token) return { ok: false, error: 'sem_token' };
+
+  // 1) Confirma que a campanha pertence à conta do slug
+  try {
+    const checkUrl = `https://graph.facebook.com/v23.0/${campaign_id}?fields=account_id,daily_budget,status&access_token=${token}`;
+    const cr = await fetch(checkUrl);
+    const cj = await cr.json();
+    if (cj.error) return { ok: false, error: cj.error.message };
+    if (String(cj.account_id) !== String(c.ad_account_id)) {
+      return { ok: false, error: `campanha não pertence a ${slug} (conta ${cj.account_id} vs ${c.ad_account_id})` };
+    }
+
+    let body = '';
+    if (action === 'pause') body = `status=PAUSED&access_token=${token}`;
+    else if (action === 'resume') body = `status=ACTIVE&access_token=${token}`;
+    else if (action === 'budget_up' || action === 'budget_down') {
+      const curr = cj.daily_budget ? Number(cj.daily_budget) : null;
+      if (!curr) return { ok: false, error: 'sem_daily_budget' };
+      const fct = factor && factor > 0 ? factor : (action === 'budget_up' ? 1.2 : 0.8);
+      const next = Math.max(100, Math.round(curr * fct)); // mínimo 100 cents
+      body = `daily_budget=${next}&access_token=${token}`;
+    } else {
+      return { ok: false, error: 'action_invalida' };
+    }
+
+    const url = `https://graph.facebook.com/v23.0/${campaign_id}`;
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    const j = await r.json();
+    if (j.error) return { ok: false, error: j.error.message };
+    // invalida caches afetadas
+    insightsCache = {};
+    campaignsCache = {};
+    return { ok: true, result: j };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     // Área admin (Basic Auth) — protege HTML e JSON
@@ -1095,6 +1148,32 @@ const server = http.createServer(async (req, res) => {
       });
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    if (req.url.startsWith('/api/campaign/action') && req.method === 'POST') {
+      let body = '';
+      for await (const chunk of req) body += chunk;
+      let payload = {};
+      try { payload = JSON.parse(body); } catch {}
+      const result = await postCampaignAction(payload);
+      res.writeHead(result.ok ? 200 : 400, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      });
+      res.end(JSON.stringify(result, null, 2));
+      return;
+    }
+    if (req.url.startsWith('/api/campaign/action') && req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      });
+      res.end();
       return;
     }
 
