@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ClienteTheme } from '@fenice/shared';
+import {
+  computeSobral,
+  detectarAlertas,
+  margemDoCliente,
+  type ClienteTheme,
+  type Alerta,
+  type MetricasSobral,
+} from '@fenice/shared';
 import './relatorio.css';
 
 // ============================================================
@@ -93,6 +100,28 @@ interface ApiInsightsResponse {
   clients: ApiClientRow[];
 }
 
+interface ApiSaldoRow {
+  slug: string;
+  name: string;
+  agencia: string | null;
+  ad_account_id: string | null;
+  currency: string | null;
+  account_status: number | null;
+  balance_cents: number | null;
+  amount_spent_cents: number | null;
+  spend_cap_cents: number | null;
+  funding_source: string | null;
+  funding_source_details: { id: string; display_string: string; type: number } | null;
+  funding_tipo: 'cartao' | 'prepago' | 'outro' | null;
+  disponivel_cents: number | null;
+}
+
+interface ApiSaldoResponse {
+  updated_at: string;
+  error: string | null;
+  clients: ApiSaldoRow[];
+}
+
 const fmtBRL = (cents: number): string =>
   'R$ ' + (cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtBRL0 = (cents: number): string =>
@@ -106,6 +135,28 @@ async function fetchInsights(params: URLSearchParams): Promise<ApiInsightsRespon
   const r = await fetch(url, { cache: 'no-store' });
   if (!r.ok) throw new Error(`API ${r.status}`);
   return await r.json();
+}
+
+async function fetchSaldo(): Promise<ApiSaldoResponse> {
+  const r = await fetch(`${API_BASE}/api/saldo`, { cache: 'no-store' });
+  if (!r.ok) throw new Error(`saldo ${r.status}`);
+  return await r.json();
+}
+
+/** Dias de cobertura = saldo disponível / gasto médio diário. */
+function calcDiasCobertura(saldoCents: number | null, gastoTotalCents: number, diasPeriodo: number): number | null {
+  if (saldoCents == null || diasPeriodo <= 0) return null;
+  const gastoDiario = gastoTotalCents / diasPeriodo;
+  if (gastoDiario <= 0) return null;
+  return saldoCents / gastoDiario;
+}
+
+/** Duração em dias do período (aproximada por preset). */
+function dursDias(preset: Preset): number {
+  if (preset === 'last_7d') return 7;
+  if (preset === 'last_30d') return 30;
+  // this_month/last_month: assume 30
+  return 30;
 }
 
 function pctDelta(curr: number, prev: number): number | null {
@@ -132,23 +183,27 @@ export function RelatorioLive({ slug, clienteNome, logo, theme }: RelatorioLiveP
   const [period, setPeriod] = useState<Preset>('last_month');
   const [curr, setCurr] = useState<ApiClientRow | null>(null);
   const [prev, setPrev] = useState<ApiClientRow | null>(null);
+  const [saldo, setSaldo] = useState<ApiSaldoRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [, force] = useState(0);
 
   const opt = useMemo(() => PERIODS.find((p) => p.preset === period)!, [period]);
+  const margemCliente = useMemo(() => margemDoCliente(slug), [slug]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
-      const [a, b] = await Promise.all([
+      const [a, b, s] = await Promise.all([
         fetchInsights(new URLSearchParams({ preset: opt.preset })),
         fetchInsights(new URLSearchParams({ since: opt.prevSince(), until: opt.prevUntil() })),
+        fetchSaldo().catch(() => null),
       ]);
       setCurr(a.clients.find((c) => c.slug === slug) ?? null);
       setPrev(b.clients.find((c) => c.slug === slug) ?? null);
+      setSaldo(s?.clients.find((c) => c.slug === slug) ?? null);
       setUpdatedAt(new Date(a.updated_at));
     } catch (e: any) {
       setErr(e?.message || 'falha ao carregar');
@@ -156,6 +211,44 @@ export function RelatorioLive({ slug, clienteNome, logo, theme }: RelatorioLiveP
       setLoading(false);
     }
   }, [opt, slug]);
+
+  // Métricas Sobral derivadas (com margem do cliente)
+  const metricas: MetricasSobral | null = useMemo(() => {
+    if (!curr) return null;
+    return computeSobral({
+      faturamento: (curr.revenue_cents || 0) / 100,
+      investido: (curr.spend_cents || 0) / 100,
+      pedidos: curr.purchases || 0,
+      frequencia: curr.frequency || 0,
+      margem: margemCliente,
+    });
+  }, [curr, margemCliente]);
+
+  // Δ ROAS pro detector de alertas
+  const deltaRoasPct = useMemo(() => {
+    if (!curr || !prev || !prev.roas) return null;
+    return ((curr.roas - prev.roas) / prev.roas) * 100;
+  }, [curr, prev]);
+
+  // Dias de cobertura
+  const diasCobertura = useMemo(() => {
+    if (!curr || !saldo) return null;
+    return calcDiasCobertura(saldo.disponivel_cents, curr.spend_cents || 0, dursDias(period));
+  }, [curr, saldo, period]);
+
+  // Alertas operacionais
+  const alertas: Alerta[] = useMemo(() => {
+    if (!metricas) return [];
+    const gastoDiarioCents = (curr?.spend_cents || 0) / dursDias(period);
+    return detectarAlertas({
+      metricas,
+      deltaRoasPct,
+      saldoCents: saldo?.disponivel_cents ?? null,
+      gastoDiarioCents,
+      addToCart: curr?.add_to_cart ?? null,
+      purchases: curr?.purchases ?? null,
+    });
+  }, [metricas, deltaRoasPct, saldo, curr, period]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -200,9 +293,9 @@ export function RelatorioLive({ slug, clienteNome, logo, theme }: RelatorioLiveP
   }, [theme.googleFonts, slug]);
 
   return (
-    <div className="rep" style={themeVars}>
+    <div className="rep rep-live" style={themeVars}>
       <div className="rep-container">
-        {/* HEADER (igual relatório estático, mas com seletor + refresh) */}
+        {/* HEADER */}
         <header className="rep-header">
           {logo ? (
             <img src={logo} alt={clienteNome} className="rep-header-logo" />
@@ -215,6 +308,51 @@ export function RelatorioLive({ slug, clienteNome, logo, theme }: RelatorioLiveP
             <div className="rep-header-sub">Dados Meta Graph</div>
           </div>
         </header>
+
+        {/* ── BLOCO 9 · ALERTAS OPERACIONAIS ── */}
+        {alertas.length > 0 && (
+          <div className="rep-alerts rep-no-print">
+            {alertas.map((al, i) => (
+              <div key={i} className={`rep-alert rep-alert--${al.severidade}`}>
+                <span className="rep-alert-icon" aria-hidden>
+                  {al.severidade === 'critico' ? '🚨' : al.severidade === 'aviso' ? '⚠' : 'ⓘ'}
+                </span>
+                <div className="rep-alert-body">
+                  <div className="rep-alert-title">{al.titulo}</div>
+                  <div className="rep-alert-detail">{al.detalhe}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── BLOCO 1 · HERO LUCRO PÓS-ADS (estilo Sobral) ── */}
+        {metricas && curr && (
+          <div className={`rep-hero rep-hero--${metricas.semaforo} rep-hero--dec-${metricas.decisao.toLowerCase()}`}>
+            <div className="rep-hero-left">
+              <div className="rep-hero-label">Lucro pós-ads · {opt.label.toLowerCase()}</div>
+              <div className="rep-hero-value">
+                {metricas.lucroPosAds >= 0 ? '+' : ''}{fmtBRL(metricas.lucroPosAds * 100)}
+              </div>
+              <div className="rep-hero-sub">
+                {fmtRoas(metricas.roas)} ROAS · CPA {fmtBRL(metricas.cpa * 100)}{' '}
+                ({metricas.cpaPctTicket.toFixed(0)}% do ticket)
+                {metricas.pedidos > 0 && ` · ${metricas.pedidos} pedidos`}
+              </div>
+            </div>
+            <div className="rep-hero-right">
+              <div className={`rep-hero-badge rep-hero-badge--${metricas.decisao.toLowerCase()}`}>
+                {metricas.decisao === 'SCALE' ? '🟢 ESCALAR' :
+                 metricas.decisao === 'HOLD' ? '🟡 MANTER' : '🔴 CORRIGIR'}
+              </div>
+              <div className="rep-hero-meta">
+                margem seg {(metricas.margemSegCpa * 100).toFixed(0)}%<br />
+                ticket {fmtBRL(metricas.ticket * 100)}<br />
+                margem op {(metricas.margem * 100).toFixed(0)}%
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* SELETOR DE PERÍODO + REFRESH */}
         <div className="rep-toolbar">
@@ -244,6 +382,15 @@ export function RelatorioLive({ slug, clienteNome, logo, theme }: RelatorioLiveP
               aria-label="Atualizar agora"
             >
               {loading ? '…' : '↻'}
+            </button>
+            <button
+              type="button"
+              className="rep-refresh-btn rep-print-btn"
+              onClick={() => window.print()}
+              aria-label="Imprimir relatório"
+              title="Imprimir / salvar PDF"
+            >
+              🖨
             </button>
           </div>
         </div>
@@ -278,8 +425,140 @@ export function RelatorioLive({ slug, clienteNome, logo, theme }: RelatorioLiveP
           </div>
         )}
 
+        {/* ── BLOCO 3 · FUNIL DE CONVERSÃO ── */}
+        {curr && (curr.impressions || 0) > 0 && (
+          <FunilConversao c={curr} />
+        )}
+
+        {/* ── BLOCO 8 · SALDO & REPOSIÇÃO ── */}
+        {saldo && (
+          <SaldoCard
+            saldo={saldo}
+            diasCobertura={diasCobertura}
+            gastoPeriodoCents={curr?.spend_cents || 0}
+            diasPeriodo={dursDias(period)}
+          />
+        )}
+
         <div className="rep-footer-note">
-          Δ comparado ao período anterior equivalente. Atualiza automaticamente a cada 5 min.
+          Δ comparado ao período anterior equivalente · Atualiza a cada 5 min · Margem operacional {(margemCliente * 100).toFixed(0)}% (config Sobral)
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Funil de conversão visual: 6 estágios com % step-to-step. Detecta o gargalo. */
+function FunilConversao({ c }: { c: ApiClientRow }) {
+  const estagios = [
+    { label: 'Impressões', value: c.impressions || 0, anchor: true },
+    { label: 'Alcance', value: c.reach || 0, anchor: false },
+    { label: 'Cliques no link', value: c.link_clicks || 0, anchor: false },
+    { label: 'Add to cart', value: c.add_to_cart || 0, anchor: false },
+    { label: 'Iniciou checkout', value: c.initiate_checkout || 0, anchor: false },
+    { label: 'Compras', value: c.purchases || 0, anchor: false },
+  ];
+  const topo = estagios[0].value || 1;
+  // detecta gargalo (menor conversão step-to-step)
+  let gargalo = -1;
+  let menorPct = Infinity;
+  for (let i = 1; i < estagios.length; i++) {
+    const prev = estagios[i - 1].value;
+    const cur = estagios[i].value;
+    if (prev > 0 && cur > 0) {
+      const p = cur / prev;
+      if (p < menorPct) { menorPct = p; gargalo = i; }
+    }
+  }
+
+  return (
+    <div className="rep-funil">
+      <div className="rep-funil-head">
+        <div className="rep-section-kicker">Funil de conversão</div>
+        <div className="rep-section-title">Por onde o dinheiro vaza</div>
+      </div>
+      <div className="rep-funil-body">
+        {estagios.map((s, i) => {
+          const totalPct = (s.value / topo) * 100;
+          const prevValue = i > 0 ? estagios[i - 1].value : null;
+          const stepPct = prevValue && prevValue > 0 ? (s.value / prevValue) * 100 : null;
+          const isGargalo = i === gargalo;
+          return (
+            <div key={s.label} className={`rep-funil-row${isGargalo ? ' is-gargalo' : ''}`}>
+              <div className="rep-funil-label">
+                {s.label}
+                {isGargalo && <span className="rep-funil-gargalo-tag">gargalo</span>}
+              </div>
+              <div className="rep-funil-bar">
+                <div className="rep-funil-fill" style={{ width: `${Math.max(2, totalPct)}%` }} />
+              </div>
+              <div className="rep-funil-value">{fmtNum(s.value)}</div>
+              <div className="rep-funil-pct">{stepPct != null ? `${stepPct.toFixed(1)}%` : '—'}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Card de saldo da conta de anúncios + dias de cobertura + sugestão de reposição. */
+function SaldoCard({
+  saldo, diasCobertura, gastoPeriodoCents, diasPeriodo,
+}: {
+  saldo: ApiSaldoRow;
+  diasCobertura: number | null;
+  gastoPeriodoCents: number;
+  diasPeriodo: number;
+}) {
+  const gastoDiarioCents = gastoPeriodoCents / Math.max(1, diasPeriodo);
+  const isCartao = saldo.funding_tipo === 'cartao';
+  const disponivel = saldo.disponivel_cents;
+  const sugestao = gastoDiarioCents > 0 ? gastoDiarioCents * 15 : 0; // 15 dias de pista
+
+  let tone: 'ok' | 'aviso' | 'critico' = 'ok';
+  if (!isCartao && diasCobertura != null) {
+    if (diasCobertura < 3) tone = 'critico';
+    else if (diasCobertura < 7) tone = 'aviso';
+  }
+
+  return (
+    <div className={`rep-saldo rep-saldo--${tone}`}>
+      <div className="rep-saldo-head">
+        <div className="rep-section-kicker">Saldo & reposição</div>
+        <div className="rep-section-title">
+          {isCartao ? 'Conta no cartão' :
+           disponivel != null ? fmtBRL(disponivel) : 'Saldo indisponível'}
+        </div>
+      </div>
+      <div className="rep-saldo-grid">
+        <div>
+          <div className="rep-saldo-label">Tipo</div>
+          <div className="rep-saldo-val">
+            {isCartao ? 'Cartão' :
+             saldo.funding_tipo === 'prepago' ? 'Pré-pago' : 'Outro'}
+          </div>
+          <div className="rep-saldo-detail">{saldo.funding_source_details?.display_string || '—'}</div>
+        </div>
+        <div>
+          <div className="rep-saldo-label">Gasto médio diário</div>
+          <div className="rep-saldo-val">{fmtBRL(gastoDiarioCents)}</div>
+          <div className="rep-saldo-detail">{fmtBRL(gastoPeriodoCents)} no período</div>
+        </div>
+        <div>
+          <div className="rep-saldo-label">Cobertura</div>
+          <div className="rep-saldo-val">
+            {isCartao ? '∞' :
+             diasCobertura != null ? `${diasCobertura.toFixed(1)}d` : '—'}
+          </div>
+          <div className="rep-saldo-detail">{isCartao ? 'Sem risco de pausa' : 'até zerar'}</div>
+        </div>
+        <div>
+          <div className="rep-saldo-label">Repor pra 15d</div>
+          <div className="rep-saldo-val">
+            {isCartao ? '—' : sugestao > 0 ? fmtBRL(sugestao) : '—'}
+          </div>
+          <div className="rep-saldo-detail">sugestão Sobral</div>
         </div>
       </div>
     </div>
