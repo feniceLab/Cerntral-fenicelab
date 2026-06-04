@@ -178,6 +178,10 @@ interface EntityActionButtonProps {
   effective_status: string | null | undefined;
   onConfirmAsk: (payload: PendingConfirm) => void;
   pending: string | null;
+  /** RBAC — se false, esconde botões de pause/resume. Default: true. */
+  canPause?: boolean;
+  /** RBAC — se false, esconde botões de budget_up/budget_down. Default: true. */
+  canEscalate?: boolean;
 }
 
 export function EntityActionButton({
@@ -187,12 +191,18 @@ export function EntityActionButton({
   effective_status,
   onConfirmAsk,
   pending,
+  canPause = true,
+  canEscalate = true,
 }: EntityActionButtonProps) {
   const isActive = effective_status === 'ACTIVE';
   const isPaused = effective_status === 'PAUSED';
   if (!isActive && !isPaused) return null;
 
   const action: EntityAction = isActive ? 'pause' : 'resume';
+  // EntityActionButton só renderiza pause/resume (deriva do effective_status).
+  // canEscalate seria pra budget_up/budget_down — fica aqui pra futuro uso (ex: botão +budget no adset).
+  if (!canPause) return null;
+  void canEscalate;
   const modifier = isActive ? 'perf-act-btn--pause' : 'perf-act-btn--resume';
   const icon = isActive ? '⏸' : '▶';
   const title = isActive ? `Pausar ${ENTITY_LABEL[entity_type]}` : `Reativar ${ENTITY_LABEL[entity_type]}`;

@@ -38,6 +38,15 @@ export interface WarRoomShellProps {
   margem?: number;
   /** Base da API. Default = VITE_TRAFEGO_URL ou '' (same-domain). */
   apiBase?: string;
+  /**
+   * Role do usuário logado (RBAC).
+   *  - 'admin_fenice' → pode pausar e escalar (budget_up/budget_down).
+   *  - 'cliente'      → pode pausar SÓ; sem escalada.
+   *  - undefined      → comportamento legado (tudo liberado, ex: portal sem auth).
+   */
+  userRole?: 'admin_fenice' | 'cliente';
+  /** Identificador do usuário (email ou nome de exibição) pra audit log. */
+  userEmail?: string;
 }
 
 /**
@@ -46,10 +55,13 @@ export interface WarRoomShellProps {
  */
 export function WarRoomShell({
   slug, clienteNome, logo = null, theme, surface = 'portal',
-  margem, apiBase,
+  margem, apiBase, userRole, userEmail,
 }: WarRoomShellProps) {
   const apiBaseResolved = apiBase ?? ((import.meta as any).env?.VITE_TRAFEGO_URL || '');
   const margemCliente = margem ?? margemDoCliente(slug);
+  // RBAC: se userRole não foi passado, mantém comportamento legado (tudo true).
+  const canPause = userRole === undefined ? true : userRole === 'admin_fenice' || userRole === 'cliente';
+  const canEscalate = userRole === undefined ? true : userRole === 'admin_fenice';
   const [tab, setTab] = useState<TabKey>(() => {
     const h = (typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : '') as TabKey;
     return TABS.some((t) => t.key === h) ? h : 'resumo';
@@ -210,7 +222,14 @@ export function WarRoomShell({
         )}
         {tab === 'campanhas' && (
           <div className="perf-tab-content">
-            <Campanhas slug={slug} preset={opt.preset} margemCliente={margemCliente} />
+            <Campanhas
+              slug={slug}
+              preset={opt.preset}
+              margemCliente={margemCliente}
+              canPause={canPause}
+              canEscalate={canEscalate}
+              actor={userEmail}
+            />
             <ComparativoMensal slug={slug} margemCliente={margemCliente} monthsBack={6} />
           </div>
         )}

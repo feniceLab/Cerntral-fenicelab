@@ -45,17 +45,19 @@ export interface CampanhaDrillDownProps {
   campaign_id: string;
   campaign_name: string;
   onClose: () => void;
+  /** Identificador do usuário pra audit log (email ou nome). */
+  actor?: string;
 }
 
-export function CampanhaDrillDown({ slug, preset, campaign_id, campaign_name, onClose }: CampanhaDrillDownProps) {
+export function CampanhaDrillDown({ slug, preset, campaign_id, campaign_name, onClose, actor }: CampanhaDrillDownProps) {
   const [ads, setAds] = useState<AdRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   // Hook compartilhado: pause/resume de campaign/adset/ad com modal+toast
-  // actor: hoje hardcoded ('Painel'); quando auth chegar virá do user logado.
-  const actions = useEntityActions(slug, 'Painel');
+  // actor vem da prop (passado via WarRoomShell → useAuth no Painel); fallback 'Painel'.
+  const actions = useEntityActions(slug, actor || 'Painel');
 
   useEffect(() => {
     setLoading(true);

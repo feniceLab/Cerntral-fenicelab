@@ -1005,15 +1005,74 @@ async function rotateAuditLogIfNeeded() {
   }
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Bot webhooks por slug — quando audit entry crítica, notifica bot do cliente.
+// Configurar via env: BOT_WEBHOOK_ARENA=http://localhost:3110/webhook/alert
+// (cada cliente tem seu próprio bot+porta — Arena 3110, Suprema 3111, etc.)
+// ──────────────────────────────────────────────────────────────────────────────
+const BOT_WEBHOOKS = {
+  arena: process.env.BOT_WEBHOOK_ARENA || null,
+  suprema: process.env.BOT_WEBHOOK_SUPREMA || null,
+};
+
+async function notifyBotIfCritical(entry) {
+  const webhook = BOT_WEBHOOKS[entry?.slug];
+  if (!webhook) return;
+  // Critério crítico: ação resultou em erro, OU foi pause/budget_down (decisão sensível).
+  const isCritical =
+    entry?.ok === false ||
+    entry?.action === 'pause' ||
+    entry?.action === 'budget_down';
+  if (!isCritical) return;
+
+  const action = entry.action || 'ação';
+  const entity = entry.entity_type === 'campaign' ? 'campanha'
+               : entry.entity_type === 'adset' ? 'adset'
+               : entry.entity_type === 'ad' ? 'criativo' : entity?.entity_type;
+  const name = entry.entity_name || entry.entity_id || '?';
+  const actor = entry.actor || 'Sistema';
+
+  const payload = entry.ok
+    ? {
+        severity: 'warning',
+        slug: entry.slug,
+        title: `${actor} aplicou "${action}" em ${entity}`,
+        detail: `Entidade: ${name}`,
+      }
+    : {
+        severity: 'critical',
+        slug: entry.slug,
+        title: `Falha ao "${action}" em ${entity}`,
+        detail: `${actor} tentou ${action} ${name} — erro: ${entry.error || 'desconhecido'}`,
+      };
+
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 4000);
+    await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
+    });
+    clearTimeout(to);
+  } catch (e) {
+    console.warn('bot webhook failed:', e.message);
+  }
+}
+
 async function logAuditEntry(entry) {
   try {
     await rotateAuditLogIfNeeded();
-    const line = JSON.stringify({
+    const enriched = {
       ts: new Date().toISOString(),
       actor: entry?.actor || null,
       ...entry,
-    }) + '\n';
+    };
+    const line = JSON.stringify(enriched) + '\n';
     await fs.appendFile(AUDIT_LOG_PATH, line, 'utf-8');
+    // Dispara alerta no bot do cliente (best effort, não bloqueia)
+    notifyBotIfCritical(enriched).catch(() => {});
   } catch (e) {
     console.warn('audit log append failed:', e.message);
   }

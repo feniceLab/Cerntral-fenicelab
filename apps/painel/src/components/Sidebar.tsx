@@ -2,7 +2,7 @@ import { Avatar } from '@fenice/shared';
 import { PnIcon, type PnIconName } from './PnIcon';
 import { SELO_TERRA } from '../assets';
 
-export type NavKey = 'clientes' | 'dashboard' | 'reposicoes' | 'relatorios';
+export type NavKey = 'clientes' | 'audit_central' | 'dashboard' | 'reposicoes' | 'relatorios';
 
 interface NavItem {
   key: NavKey;
@@ -19,7 +19,10 @@ interface NavGroup {
 const GROUPS: NavGroup[] = [
   {
     label: 'Operação',
-    items: [{ key: 'clientes', icon: 'users', label: 'Clientes' }],
+    items: [
+      { key: 'clientes', icon: 'users', label: 'Clientes' },
+      { key: 'audit_central', icon: 'activity', label: 'Audit Central' },
+    ],
   },
   {
     label: 'Tráfego Pago',

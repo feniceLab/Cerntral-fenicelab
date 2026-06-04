@@ -45,6 +45,12 @@ interface Props {
   since?: string;
   until?: string;
   margemCliente: number;
+  /** RBAC — se false, esconde botões de pausar/reativar. Default: true. */
+  canPause?: boolean;
+  /** RBAC — se false, esconde botões de budget_up (+20%). Default: true. */
+  canEscalate?: boolean;
+  /** Identificador do usuário pra audit log (email ou nome). */
+  actor?: string;
 }
 
 type ActionKind = 'pause' | 'resume' | 'budget_up';
@@ -55,7 +61,10 @@ interface PendingAction {
   action: ActionKind;
 }
 
-export function Campanhas({ slug, preset, since, until, margemCliente }: Props) {
+export function Campanhas({
+  slug, preset, since, until, margemCliente,
+  canPause = true, canEscalate = true, actor,
+}: Props) {
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -76,7 +85,7 @@ export function Campanhas({ slug, preset, since, until, margemCliente }: Props) 
       const r = await fetch(`${API_BASE}/api/campaign/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, campaign_id, action }),
+        body: JSON.stringify({ slug, campaign_id, action, actor }),
       });
       const j = await r.json();
       if (j.ok) {
@@ -241,16 +250,18 @@ export function Campanhas({ slug, preset, since, until, margemCliente }: Props) 
                 <div className="perf-camp-actions">
                   {isActive && (
                     <>
-                      <button
-                        type="button"
-                        className="perf-act-btn perf-act-btn--pause"
-                        title="Pausar"
-                        disabled={actionLoading != null}
-                        onClick={() => setConfirming({ campaign_id: c.campaign_id, name: c.name, action: 'pause' })}
-                      >
-                        {actionLoading === c.campaign_id + ':pause' ? '…' : '⏸'}
-                      </button>
-                      {c.daily_budget_cents != null && (
+                      {canPause && (
+                        <button
+                          type="button"
+                          className="perf-act-btn perf-act-btn--pause"
+                          title="Pausar"
+                          disabled={actionLoading != null}
+                          onClick={() => setConfirming({ campaign_id: c.campaign_id, name: c.name, action: 'pause' })}
+                        >
+                          {actionLoading === c.campaign_id + ':pause' ? '…' : '⏸'}
+                        </button>
+                      )}
+                      {canEscalate && c.daily_budget_cents != null && (
                         <button
                           type="button"
                           className="perf-act-btn perf-act-btn--up"
@@ -263,7 +274,7 @@ export function Campanhas({ slug, preset, since, until, margemCliente }: Props) 
                       )}
                     </>
                   )}
-                  {isPaused && (
+                  {isPaused && canPause && (
                     <button
                       type="button"
                       className="perf-act-btn perf-act-btn--resume"
@@ -292,6 +303,7 @@ export function Campanhas({ slug, preset, since, until, margemCliente }: Props) 
           campaign_id={drillCampaign.id}
           campaign_name={drillCampaign.name}
           onClose={() => setDrillCampaign(null)}
+          actor={actor}
         />
       )}
 

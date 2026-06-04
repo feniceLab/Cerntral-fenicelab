@@ -1,5 +1,6 @@
 import { WarRoomShell, themeBySlug, type ClienteFenice } from '@fenice/shared';
 import { PnIcon } from '../components/PnIcon';
+import { useAuth } from '../auth/useAuth';
 
 export interface PerformanceProps {
   cliente: ClienteFenice;
@@ -10,10 +11,16 @@ export interface PerformanceProps {
  * War room de Performance direto no Painel admin (sem iframe duplo).
  * Reusa WarRoomShell de shared/components/performance.
  * Surface = 'painel' (não escreve no hash, header sem live indicator).
+ *
+ * RBAC:
+ *  - admin_fenice → vê tudo + pode pausar e escalar.
+ *  - cliente      → vê o próprio + pode pausar, mas NÃO escalar (sem budget_up).
  */
 export function Performance({ cliente, onBack }: PerformanceProps) {
   const theme = themeBySlug(cliente.slug, cliente.cor);
   const logo = cliente.logo ? cliente.logo : null;
+  const { role, email, nomeExibicao } = useAuth();
+  const actor = nomeExibicao || email || undefined;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: theme.bg }}>
@@ -42,11 +49,16 @@ export function Performance({ cliente, onBack }: PerformanceProps) {
           <span style={{ transform: 'rotate(180deg)', display: 'inline-flex' }}>
             <PnIcon name="chevR" size={14} />
           </span>
-          Voltar
+          {role === 'cliente' ? 'Sair' : 'Voltar'}
         </button>
         <div style={{ marginLeft: 4, font: '600 12px/1 var(--fen-font)', color: 'var(--fen-muted)', letterSpacing: '.04em' }}>
           Performance · {cliente.nome}
         </div>
+        {actor && (
+          <div style={{ marginLeft: 'auto', font: '500 12px/1 var(--fen-font)', color: 'var(--fen-muted)' }}>
+            {actor}
+          </div>
+        )}
       </div>
       <div style={{ flex: 1, minHeight: 0 }}>
         <WarRoomShell
@@ -55,6 +67,8 @@ export function Performance({ cliente, onBack }: PerformanceProps) {
           logo={logo}
           theme={theme}
           surface="painel"
+          userRole={role ?? undefined}
+          userEmail={actor}
         />
       </div>
     </div>

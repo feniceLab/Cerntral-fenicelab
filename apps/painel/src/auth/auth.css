@@ -1,0 +1,144 @@
+/* ============================================================
+   Auth — Fenice Lab (Login + Splash)
+   Identidade visual avorio + caffe + terra.
+   ============================================================ */
+
+.fen-auth-stage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fen-avorio);
+  padding: 24px;
+  font-family: var(--fen-font);
+}
+
+.fen-auth-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--fen-surface);
+  border: 1px solid var(--fen-border);
+  border-radius: 14px;
+  padding: 32px 28px;
+  box-shadow: 0 14px 48px -16px rgba(58, 38, 24, 0.18),
+              0 2px 6px rgba(58, 38, 24, 0.06);
+}
+
+.fen-auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 22px;
+}
+
+.fen-auth-brand-mark {
+  font: 700 22px/1 var(--fen-font);
+  color: var(--fen-caffe);
+  letter-spacing: 0.02em;
+}
+
+.fen-auth-brand-kicker {
+  font: 600 11px/1 var(--fen-font);
+  color: var(--fen-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.fen-auth-title {
+  font: 700 17px/1.2 var(--fen-font);
+  color: var(--fen-caffe);
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.fen-auth-sub {
+  font: 400 13px/1.4 var(--fen-font);
+  color: var(--fen-muted);
+  text-align: center;
+  margin: 0 0 22px;
+}
+
+.fen-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fen-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fen-auth-label {
+  font: 600 12px/1 var(--fen-font);
+  color: var(--fen-caffe);
+  letter-spacing: 0.04em;
+}
+
+.fen-auth-input {
+  border: 1px solid var(--fen-border);
+  background: var(--fen-avorio);
+  color: var(--fen-caffe);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: 400 14px/1.2 var(--fen-font);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fen-auth-input:focus {
+  border-color: var(--fen-terra, #b3704a);
+  box-shadow: 0 0 0 3px rgba(179, 112, 74, 0.18);
+}
+
+.fen-auth-error {
+  background: rgba(196, 64, 48, 0.08);
+  color: #8c2e22;
+  border: 1px solid rgba(196, 64, 48, 0.28);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: 500 12.5px/1.4 var(--fen-font);
+}
+
+.fen-auth-btn {
+  margin-top: 6px;
+  background: var(--fen-terra, #b3704a);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 14px;
+  font: 700 13.5px/1 var(--fen-font);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.fen-auth-btn:hover:not(:disabled) {
+  background: #9d6240;
+}
+
+.fen-auth-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.fen-auth-foot {
+  margin-top: 18px;
+  text-align: center;
+  font: 400 11.5px/1.4 var(--fen-font);
+  color: var(--fen-muted);
+}
+
+/* Splash de carregamento inicial */
+.fen-auth-splash {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fen-avorio);
+  color: var(--fen-muted);
+  font: 600 13px/1 var(--fen-font);
+  letter-spacing: 0.06em;
+}
