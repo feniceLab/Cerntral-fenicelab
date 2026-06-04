@@ -30,8 +30,10 @@ export interface ClienteFenice {
   status: ClienteStatus;
   /** rótulo amigável do status (mostrado quando em setup). */
   statusLabel: string;
-  /** cor de destaque da marca (acento nos cards/badges). */
+  /** cor de destaque da marca (acento nos cards/badges) — dentro da paleta Fenice. */
   cor: string;
+  /** caminho do logo do cliente (servido pelo painel). null = usa fallback inicial. */
+  logo: string | null;
   /** existe relatório publicado (tela React) para este cliente? */
   relatorioPronto: boolean;
   /** portal white-label do cliente (subdomínio próprio). null = ainda não existe. */
@@ -62,6 +64,7 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     status: 'ativo',
     statusLabel: 'Ativo',
     cor: '#B23A2E',
+    logo: '/clientes/suprema.png',
     relatorioPronto: true,
     portalUrl: 'https://supremapizza.fenicelab.com.br',
     funding: 'cartao',
@@ -78,7 +81,8 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     pixelId: null,
     status: 'ativo',
     statusLabel: 'Ativo',
-    cor: '#8C4A8F',
+    cor: '#CC7A4D',
+    logo: '/clientes/arena.png',
     relatorioPronto: true,
     portalUrl: 'https://arenagourmet.fenicelab.com.br',
     funding: 'prepago',
@@ -95,7 +99,8 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     pixelId: null,
     status: 'ativo',
     statusLabel: 'Ativo',
-    cor: '#C8742B',
+    cor: '#CC7A4D',
+    logo: null,
     relatorioPronto: false,
     portalUrl: null,
     funding: 'prepago',
@@ -112,7 +117,8 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     pixelId: null,
     status: 'ativo',
     statusLabel: 'Ativo',
-    cor: '#3C6E8F',
+    cor: '#6E5A48',
+    logo: null,
     relatorioPronto: false,
     portalUrl: null,
     funding: null,
@@ -129,7 +135,8 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     pixelId: null,
     status: 'setup',
     statusLabel: 'Aguardando setup',
-    cor: '#A88121',
+    cor: '#76241C',
+    logo: null,
     relatorioPronto: false,
     portalUrl: null,
     funding: null,
