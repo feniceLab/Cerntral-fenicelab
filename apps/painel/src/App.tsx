@@ -5,7 +5,7 @@ import { Dashboard } from './screens/Dashboard';
 import { Clientes } from './screens/Clientes';
 import { Reposicoes } from './screens/Reposicoes';
 import { Relatorios } from './screens/Relatorios';
-import { PortalEmbed } from './screens/PortalEmbed';
+import { Performance } from './screens/Performance';
 import './styles.css';
 
 const VIEWS: NavKey[] = ['clientes', 'dashboard', 'reposicoes', 'relatorios'];
@@ -71,7 +71,7 @@ export function App() {
             </svg>
           </button>
           {portalCliente ? (
-            <PortalEmbed cliente={portalCliente} onBack={() => setPortalCliente(null)} />
+            <Performance cliente={portalCliente} onBack={() => setPortalCliente(null)} />
           ) : view === 'clientes' ? (
             <Clientes onOpen={setPortalCliente} />
           ) : view === 'reposicoes' ? (

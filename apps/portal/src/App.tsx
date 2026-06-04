@@ -33,9 +33,7 @@ export function App() {
   return <PortalApp />;
 }
 
-// Relatório standalone (full-bleed) pra embutir no brand book.
-//   - Topo: dado AO VIVO via /api/insights (Meta Graph) — seletor de período + Δ + auto-refresh
-//   - Base: relatório editorial mensal (snapshot rico do último fechamento)
+// Performance war room (dado vivo Meta Graph) — full bleed pro iframe do brand book.
 function EmbeddedReport() {
   const cliente = clienteBySlug(SLUG);
   const report = REPORTS[SLUG];
@@ -48,7 +46,6 @@ function EmbeddedReport() {
         logo={report?.logo || null}
         theme={theme}
       />
-      {report && <Relatorio data={report} theme={theme} />}
     </div>
   );
 }
