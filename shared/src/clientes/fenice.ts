@@ -49,7 +49,7 @@ export const reportPath = (slug: string): string => `/${slug}-report.html`;
 /** Caminho do hub do cliente, relativo à base do serviço de tráfego. */
 export const hubPath = (slug: string): string => `/${slug}/`;
 
-/** Os 5 clientes da Fenice Lab. Ordem: clientes com portal próprio primeiro. */
+/** Os 7 clientes da Fenice Lab. Ordem: clientes com portal próprio primeiro. */
 export const CLIENTES_FENICE: ClienteFenice[] = [
   {
     slug: 'suprema',
@@ -86,6 +86,42 @@ export const CLIENTES_FENICE: ClienteFenice[] = [
     relatorioPronto: true,
     portalUrl: 'https://arenagourmet.fenicelab.com.br',
     funding: 'prepago',
+  },
+  {
+    slug: 'dommus',
+    nome: 'Dommus Smart Home',
+    letter: 'D',
+    seg: 'Automação residencial · SC',
+    ig: 'dommus.smarthome',
+    agencia: AGENCIA,
+    adAccountId: null,
+    pageId: null,
+    pixelId: null,
+    status: 'setup',
+    statusLabel: 'Onboarding',
+    cor: '#2A211C',
+    logo: null,
+    relatorioPronto: false,
+    portalUrl: 'https://dommus.fenicelab.com.br',
+    funding: null,
+  },
+  {
+    slug: 'taas',
+    nome: 'Taas',
+    letter: 'T',
+    seg: 'A definir',
+    ig: null,
+    agencia: AGENCIA,
+    adAccountId: null,
+    pageId: null,
+    pixelId: null,
+    status: 'setup',
+    statusLabel: 'Onboarding',
+    cor: '#6E5A48',
+    logo: null,
+    relatorioPronto: false,
+    portalUrl: 'https://taas.fenicelab.com.br',
+    funding: null,
   },
   {
     slug: 'oca',
